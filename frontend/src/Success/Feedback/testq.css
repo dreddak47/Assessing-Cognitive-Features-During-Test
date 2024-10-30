@@ -1,0 +1,145 @@
+/* Test.css */
+.Guessed{
+  max-width: fit-content;
+  padding: 10px 10px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;
+  text-align: center;
+  width:80%;
+  background-color: #f4f4f4;
+}
+
+.Guessed button{
+  width:40%;
+  padding: 10px 20px;
+}
+
+.test-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .question {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .guess-options {
+    display: flex;
+    flex-direction: column; /* Arrange buttons in a column */
+    align-items: center; /* Center buttons horizontally */
+    gap: 10px; /* Space between buttons */
+    margin-top: 20px; /* Add some space above the options */
+  }
+  
+  .guess-options h3 {
+    margin-bottom: 10px;
+  }
+  
+  .guess-options button {
+    width: 200px; /* Set a uniform width for buttons */
+    padding: 10px; /* Padding inside buttons */
+    background-color: #ff4f5a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s; /* Smooth transition on hover */
+  }
+  
+  .guess-options button:hover {
+    background-color: #ff6f7a; /* Slightly lighter color on hover */
+  }
+  
+  .guess-options button.selected {
+    background-color: white;
+    color: #ff4f5a /* Darker shade for selected button */
+  }
+
+  .next-button {
+    margin-top: 20px; /* Space above the Next button */
+    width: 400px; /* Slightly larger width */
+    padding: 12px;
+    background-color: #4caf50; /* Different background color */
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .next-button:hover {
+    background-color: #45a049;
+  }
+  
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  .button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .timer {
+    font-size: 18px;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+  
+  .loading {
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .sidebar.collapsed ~ .content {
+    margin-left: 80px;
+  }
+  
+  /* For mobile view */
+  @media screen and (max-width: 768px) {
+    .content {
+      margin-left: 200px;
+    }
+  
+    .sidebar.collapsed ~ .content {
+      margin-left: 60px;
+    }
+  }
+  
