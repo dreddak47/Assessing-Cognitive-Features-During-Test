@@ -73,31 +73,31 @@ app.post('/log', (req, res) => {
   });
 });
 
-const storage = multer.diskStorage({
-  destination:"./uploads",
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}__${file.originalname}`); // Appends timestamp to original file name
-  },
-});
+// const storage = multer.diskStorage({
+//   destination:"./uploads",
+//   filename: (req, file, cb) => {
+//     cb(null, `${Date.now()}__${file.originalname}`); // Appends timestamp to original file name
+//   },
+// });
 
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50MB
-}).single('image'); // Expecting a single file with field name 'image'
+// const upload = multer({ 
+//   storage: storage,
+//   limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50MB
+// }).single('image'); // Expecting a single file with field name 'image'
 
-app.post('/upload', (req, res) => {
-  upload(req, res, function (err) {
-    if (err instanceof multer.MulterError) {
-      return res.status(400).send({ message: 'File too large!' });
-      console.log("not file uploaded successfully");
-    } else if (err) {
-      return res.status(500).send({ message: 'Failed to upload file!' });
-      console.log("not file uploaded successfully");
-    }
-    res.status(200).send({ message: 'Upload successful!', file: req.file });
-    console.log("file uploaded successfully")
-  });
-});
+// app.post('/upload', (req, res) => {
+//   upload(req, res, function (err) {
+//     if (err instanceof multer.MulterError) {
+//       return res.status(400).send({ message: 'File too large!' });
+//       console.log("not file uploaded successfully");
+//     } else if (err) {
+//       return res.status(500).send({ message: 'Failed to upload file!' });
+//       console.log("not file uploaded successfully");
+//     }
+//     res.status(200).send({ message: 'Upload successful!', file: req.file });
+//     console.log("file uploaded successfully")
+//   });
+// });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
