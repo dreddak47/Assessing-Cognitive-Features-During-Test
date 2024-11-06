@@ -26,7 +26,7 @@ const Test = () => {
 
   const TimeperQuestion = 50;
   useEffect(() => {
-    axios.get(`${import.meta.env.BACKEND_BASEURL}/questions`)
+    axios.get(`${process.env.REACT_APP_BACKEND_BASEURL}/questions`)
       .then(response => {
           setQuestions(response.data)
           setTimeLeft(response.data.map(() => TimeperQuestion));
@@ -90,7 +90,7 @@ const Test = () => {
 
   const logEvent = async (event) => {
     try {
-      await axios.post(`${import.meta.env.BACKEND_BASEURL}/log`, {
+      await axios.post(`${process.env.REACT_APP_BACKEND_BASEURL}/log`, {
         event: event,
         timestamp: new Date().toISOString(),
       });

@@ -18,7 +18,7 @@ function Success() {
     // Send a POST request to the server with the answer
     const getScore = async () => {
       try {
-        const response = await axios.post(`${import.meta.env.BACKEND_BASEURL}/getScore`, { answer });
+        const response = await axios.post(`${process.env.REACT_APP_BACKEND_BASEURL}/getScore`, { answer });
         setScore(response.data.score);
         setAnswerstate(response.data.answerStatus);
       } catch (error) {
