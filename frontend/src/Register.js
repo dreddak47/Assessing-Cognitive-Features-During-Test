@@ -12,7 +12,7 @@ const navigate = useNavigate();
 const handleSubmit = (e) => {
   console.log("registering");
   e.preventDefault();
-  axios.post('http://localhost:5000/register', { name, email, branch })
+  axios.post(`${import.meta.env.BACKEND_BASEURL}/register`, { name, email, branch })
     .then(response => {
       console.log(response.data);
       navigate('/test',{ state: { info: name } });

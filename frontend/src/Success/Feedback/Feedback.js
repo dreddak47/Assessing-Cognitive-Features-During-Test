@@ -14,7 +14,7 @@ const Feedback=({answers,timeTaken,seenFirst,submittedAfterSeen,answerstatus}) =
     const [Flag, setFlag] = useState('');
 
     useEffect(() => {
-        axios.get('http://localhost:5000/questions')
+        axios.get(`${import.meta.env.BACKEND_BASEURL}/questions`)
           .then(response => {
               setQuestions(response.data)
               setCurrentQuestion(0);
