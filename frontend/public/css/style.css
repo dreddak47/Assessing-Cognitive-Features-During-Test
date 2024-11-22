@@ -17,7 +17,11 @@ form {
   
 }
 
-
+form .error-message {
+  color: red;
+  font-weight: bold;
+  padding: 10px;
+}
 
 input {
   margin-bottom: 10px;
@@ -31,7 +35,13 @@ input:focus {
   border-color: #007bff;
   outline: none;
 }
-
+select {
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
 .layout_padding {
   padding-top: 90px;
   padding-bottom: 90px;
@@ -205,8 +215,8 @@ a:focus {
 .custom_nav-container .navbar-toggler .navbar-toggler-icon {
   background-image: url(../images/menu.png);
   background-size: 30px;
-  width: 32px;
-  height: 32px;
+  width: 16px;
+  height: 20px;
 }
 
 .lg_toggl-btn {

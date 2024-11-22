@@ -1,3 +1,4 @@
+
 .success-container {
     text-align: center;
     margin-top: 50px;
@@ -10,6 +11,12 @@
     margin-top: 20px;
     text-align: center;
     
+  }
+
+  h1{
+    font-size: 40px;
+    font-weight: bold;
+    color: #333;
   }
 
   .loading-container {

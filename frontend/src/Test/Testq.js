@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useRef,  useEffect, useState } from 'react';
 import axios from 'axios';
 import TestQ from './Component/camera/camera';
 import QuestionHeader from './Component/QuestionHeader/QuestionHeader'; 
@@ -8,13 +8,15 @@ import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 
+
 const Test = () => {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState([]);
+  const [answerstmp, setAnswerstmp] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState('');
-  const [selectedOption, setSelectedOption] = useState('');
+  const [selectedOption, setSelectedOption] = useState(-1);
   const [timeLeft, setTimeLeft] = useState([]);
-  const [timerId, setTimerId] = useState(null);
+  
   const [TotalTime, settotalTime] = useState(0);
   const [disbs, setdisbs] = useState([]);
   const [firsttime, setfirsttime] = useState([]);
@@ -23,6 +25,57 @@ const Test = () => {
 
   const location = useLocation();
   const namewe = location.state?.info;
+  const id = location.state?.id;
+
+  // useEffect(() => {
+  //   const webgazer=window.webgazer;
+  //   webgazer.setGazeListener((data, elapsedTime)=>{
+  //     // console.log(data,elapsedTime);
+  //     axios
+  //     .post("http://localhost:5000/receive-gazer", { data,elapsedTime })
+  //     .catch((error) => console.error("Error sending frame to Node.js: ", error));
+  //   }).begin();
+  // }, []);
+
+  // const videoRef = useRef(null);
+  // const canvasRef = useRef(null);
+
+  // useEffect(() => {
+  //   // Access the webcam
+  //   navigator.mediaDevices
+  //     .getUserMedia({ video: true })
+  //     .then((stream) => {
+  //       if (videoRef.current) {
+  //         videoRef.current.srcObject = stream;
+  //       }
+  //     })
+  //     .catch((err) => console.error("Error accessing webcam: ", err));
+
+  //   // Start sending frames every 1 second
+  //   const intervalId = setInterval(() => {
+  //     if (canvasRef.current && videoRef.current) {
+  //       const canvas = canvasRef.current;
+  //       const video = videoRef.current;
+
+  //       // Draw the current video frame to the canvas
+  //       const ctx = canvas.getContext("2d");
+  //       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  //       // Convert canvas to Base64 image
+  //       const image = canvas.toDataURL("image/jpeg");
+
+  //       // Send the frame to Flask server
+  //       axios
+  //         .post("http://localhost:5000/receive-image", { frame: image })
+  //         .catch((error) => console.error("Error sending frame to Node.js: ", error));
+  //     }
+  //   }, 3000);
+
+  //   return () => clearInterval(intervalId);
+  // }, []);
+
+  
+
 
   const TimeperQuestion = 50;
   useEffect(() => {
@@ -30,11 +83,16 @@ const Test = () => {
       .then(response => {
           setQuestions(response.data)
           setTimeLeft(response.data.map(() => TimeperQuestion));
-          setAnswers(response.data.map(() => ''));
+          setAnswers(response.data.map(() => -1));
           setdisbs(response.data.map(() => 0));
           setfirsttime(response.data.map(() => -1));
           setsfirsttime(response.data.map(() => -1));
-          logEvent(`Test started for user: ${namewe}`);
+          setAnswerstmp(response.data.map(() => -1));
+          logEvent({
+            UserID: id,
+            EventType : 'START',
+            Time: 0
+          });
           setCurrentQuestion(0);
           setfirsttime(prevState => [1, ...prevState.slice(1)]);
         })
@@ -47,7 +105,6 @@ const Test = () => {
 
   useEffect(() => {
     // Start the timer when the component mounts
-
     const interval = setInterval(() => {
       settotalTime((prevSeconds) => {
         if (prevSeconds === 0) {
@@ -63,24 +120,30 @@ const Test = () => {
     return () => clearInterval(interval);
   }, []);
   
-  
-
+  const [timerId, setTimerId] = useState(null);
   useEffect(() => {
       if(questions.length >0){
-      clearInterval(timerId);
+      
       const newTimerId = setInterval(() => {
       setTimeLeft(prevTimeLeft => {
         const newTimeLeft = [...prevTimeLeft];
+      
         if (newTimeLeft[currentQuestion] >= 0 && disbs[currentQuestion]===0) {
           newTimeLeft[currentQuestion] -=1;
           if (newTimeLeft[currentQuestion] === 0) {
-            logEvent(`Time ended for ${currentQuestion}`);
+            logEvent({
+              UserID: id,
+              EventType : 'QTimeout',
+              Time: questions.length*TimeperQuestion-TotalTime ,
+              Qn : currentQuestion
+            });
             handleNext();
             newTimeLeft[currentQuestion] -=1;
           }
         }
         return newTimeLeft;
       });
+      
     }, 1000);
     setTimerId(newTimerId);
     // Clean up timer when component unmounts
@@ -88,11 +151,14 @@ const Test = () => {
     return () => clearInterval(timerId);
   }, [currentQuestion]);
 
-  const logEvent = async (event) => {
+
+  //LOGGING FUNCTION
+  const logEvent = async (logData) => {
     try {
       await axios.post(`${process.env.REACT_APP_BACKEND_BASEURL}/log`, {
-        event: event,
+        ...logData, // Spread the object to send its keys and values in the request body
         timestamp: new Date().toISOString(),
+        
       });
       console.log('Log entry created');
     } catch (error) {
@@ -100,8 +166,19 @@ const Test = () => {
     }
   };
 
-  const handleOptionChange = (e) => {
-    setSelectedOption(e.target.value);
+  // const handleOptionChange = (e) => {
+  //   const selectedValue = parseInt(e.target.value, 10);
+  //   setSelectedOption(selectedValue);
+  //   const newAnswerstmp = [...answerstmp];
+  //   newAnswerstmp[currentQuestion] = selectedValue;
+  //   setAnswerstmp(newAnswerstmp);
+  // };
+
+  const handleOptionSelect = (index) => {
+    setSelectedOption(index);
+    const newAnswerstmp = [...answerstmp];
+    newAnswerstmp[currentQuestion] = index;
+    setAnswerstmp(newAnswerstmp);
   };
 
   const handleQuestionClick = (index) => {
@@ -111,11 +188,28 @@ const Test = () => {
   };
 
   const changeQuestion = (index) => {
-    logEvent(`Question: ${currentQuestion} to ${index} | submitted: ${disbs[currentQuestion]===1?"Yes":"No"} | TimeLeft: ${TimeperQuestion-timeLeft[currentQuestion]} seconds`);
+    logEvent({
+      UserID: id,
+      EventType : 'QChange',
+      Time: questions.length*TimeperQuestion-TotalTime,
+      Qn : currentQuestion,
+      Qnto : index,
+      submitted: disbs[currentQuestion]===1?"Yes":"No",
+      TimeLeft: TimeperQuestion-timeLeft[currentQuestion]
+    });
+
+    //logEvent(`Question: ${currentQuestion} to ${index} | submitted: ${disbs[currentQuestion]===1?"Yes":"No"} | TimeLeft: ${TimeperQuestion-timeLeft[currentQuestion]} seconds`);
     if(firsttime[index]===-1){
       const newfirsttime = [...firsttime];
       newfirsttime[index] = TimeperQuestion*questions.length - TotalTime; 
-      logEvent(`First time seen Question: ${index} = ${newfirsttime[index]} seconds`);
+      logEvent({
+        UserID: id,
+        EventType : 'Qfirstseen',
+        Time: questions.length*TimeperQuestion-TotalTime,
+        Qn : index,
+        FirsttimeSeen : newfirsttime[index]
+      });
+      //logEvent(`First time seen Question: ${index} = ${newfirsttime[index]} seconds`);
       setfirsttime(newfirsttime)
     }
     setSelectedOption('');
@@ -123,13 +217,17 @@ const Test = () => {
   };
 
   const handleNext = () => {
-    logEvent('Next')
+    logEvent({
+      UserID: id,
+      EventType : 'NEXT',
+      Time: questions.length*TimeperQuestion-TotalTime
+    });
+
     handleQuestionClick(currentQuestion+1)
   
   };
 
   const handlesubmit = () => {
-    
     const newAnswers = [...answers];
     const newdisbs = [...disbs];
     const newsfirsttime = [...sfirsttime];
@@ -140,12 +238,27 @@ const Test = () => {
     setAnswers(newAnswers);
     setdisbs(newdisbs);
     console.log(newAnswers);
-    logEvent(`Submitted Question: ${currentQuestion} -> ${selectedOption} | timeTaken : ${TimeperQuestion-timeLeft[currentQuestion]} seconds | FirsttimeSeen : ${firsttime[currentQuestion]} seconds | Timefromfirstseen : ${newsfirsttime[currentQuestion]} seconds`);
+
+    logEvent({
+      UserID: id,
+      EventType : 'QSubmit',
+      Time: questions.length*TimeperQuestion-TotalTime ,
+      Qn : currentQuestion ,
+      Soption: selectedOption,
+      timeTaken : TimeperQuestion-timeLeft[currentQuestion],
+      FirsttimeSeen : firsttime[currentQuestion] ,
+      Timefromfirstseen : newsfirsttime[currentQuestion]
+    });
+    //logEvent(`Submitted Question: ${currentQuestion} -> ${selectedOption} | timeTaken : ${TimeperQuestion-timeLeft[currentQuestion]} seconds | FirsttimeSeen : ${firsttime[currentQuestion]} seconds | Timefromfirstseen : ${newsfirsttime[currentQuestion]} seconds`);
     handleNext(); 
   };
   
   const handlePrev = () => {
-    logEvent('Previous')
+    logEvent({
+      UserID: id,
+      EventType : 'PREV',
+      Time: questions.length*TimeperQuestion-TotalTime
+    });
     handleQuestionClick(currentQuestion-1)
   };
   
@@ -153,8 +266,12 @@ const Test = () => {
   
   const end = (e) => {
     e.preventDefault(); // Prevent default link behavior
-    logEvent('Test Ended ')
-    navigate('/success',{state:{name:namewe,answer:answers,timeTaken:timeLeft,seenFirst:firsttime,submittedAfterSeen:sfirsttime}}); // Call the endTest function
+    logEvent({
+      UserID: id,
+      EventType : 'END',
+      Time: questions.length*TimeperQuestion-TotalTime
+    });
+    navigate('/success',{state:{name:namewe,id:id,answer:answers,timeTaken:timeLeft,seenFirst:firsttime,submittedAfterSeen:sfirsttime}}); // Call the endTest function
   };
 
   if (!questions.length) return <div>If your test has not started, please reload</div>;
@@ -164,6 +281,10 @@ const Test = () => {
     <Sidebar Totaltime={TotalTime} name={namewe} handleEndTestClick={end}/>
     <div className="test-container">
       <TestQ />
+      {/* <div>
+          <video ref={videoRef} autoPlay muted width="640" height="480" style={{ display: "none" }} />
+          <canvas ref={canvasRef} width="640" height="480" style={{ display: "none" }} />
+        </div> */}
       <QuestionHeader 
         totalQuestions={questions.length} 
         currentQuestion={currentQuestion} 
@@ -171,21 +292,32 @@ const Test = () => {
       />
       
       <h2 className="question">{questions[currentQuestion].question}</h2>
-      <form className="options">
+      <div className="options">
+        {questions[currentQuestion].options.map((option, index) => (
+          <div
+            key={index}
+            className={`option-box ${selectedOption === index || answerstmp[currentQuestion] === index ? "selected" : ""}`}
+            onClick={() => handleOptionSelect(index)}
+          >
+            <p className="option-text">{option}</p>
+          </div>
+        ))}
+      </div>
+      {/* <form className="options">
         {questions[currentQuestion].options.map((option, index) => (
           <div key={index} className="option">
             <input
               type="radio"
               id={`option${index}${currentQuestion}`}
               name={`option${index}`}
-              value={option}
-              checked={selectedOption === option || answers[currentQuestion] === option}
+              value={index}
+              checked={selectedOption === index || answerstmp[currentQuestion] === index}
               onChange={handleOptionChange}
             />
             <label htmlFor={`option${index}`}>{option}</label>
           </div>
         ))}
-      </form>
+      </form> */}
       <div className="button-container">
         <button onClick={handlePrev} disabled={currentQuestion===0}>Previous</button>
         <button onClick={handlesubmit} disabled={timeLeft[currentQuestion]<=0 || disbs[currentQuestion]===1}>Submit</button>

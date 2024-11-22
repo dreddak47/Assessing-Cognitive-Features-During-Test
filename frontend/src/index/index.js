@@ -3,21 +3,71 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [branch, setBranch] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [branch, setBranch] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [batch, setBatch] = useState("");
+  const [rollNo, setRollNo] = useState("");
+  const [refID, setRefID] = useState("");
+  const [mobile, setMobile] = useState("");
+
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+
+  // webgazer.setGazeListener(function(data, elapsedTime) {
+  //   if (data == null) {
+  //     return;
+  //   }
+  //   var xprediction = data.x; //these x coordinates are relative to the viewport
+  //   var yprediction = data.y; //these y coordinates are relative to the viewport
+  //   console.log(elapsedTime); //elapsed time is based on time since begin was called
+  // }).begin();
   
+  // useEffect(() => {
+  //   const webgazer=window.webgazer;
+  //   webgazer.setGazeListener((data, elapsedTime)=>{
+  //     // console.log(data,elapsedTime);
+  //     axios
+  //     .post("http://localhost:5000/receive-gazer", { data,elapsedTime })
+  //     .catch((error) => console.error("Error sending frame to Node.js: ", error));
+  //   }).begin();
+  // }, []);
+
+
+
+  
+
+
   const handleSubmit = (e) => {
     console.log("registering");
+
     e.preventDefault();
-    axios.post(`${process.env.REACT_APP_BACKEND_BASEURL}/register`, { name, email, branch })
+    setError("");
+    let data={}
+    if(institution === "IIITD"){
+      data={name,email,institution,mobile,batch,branch,rollNo};
+    }else if(institution === "Other"){
+      data={name,email,institution,mobile,refID};
+    }
+    axios.post(`${process.env.REACT_APP_BACKEND_BASEURL}/register`, data)
       .then(response => {
-        console.log(response.data);
-        navigate('/test',{ state: { info: name } });
+        console.log(response.data.id);
+        navigate('/test',{ state: { info: name, id : response.data.id} });
       })
-      .catch(error => console.error('There was an error!', error));
+      .catch(error => {
+        console.error('There was an error!', error)
+        if (error.response && error.response.data) {
+          setError(error.response.data.error); // Backend-provided error
+        } else {
+          setError("An unexpected error occurred. Try Again in a while"); // Generic error
+        }
+      });
   };
+
+
+
 
   useEffect(() => {
     const registerLink = document.getElementById("register");
@@ -48,7 +98,7 @@ const Index = () => {
         <meta name="keywords" content />
         <meta name="description" content />
         <meta name="author" content />
-        <title>Spering</title>
+        <title>Anumaan</title>
         {/* bootstrap core css */}
         <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
         <link href="https://fonts.googleapis.com/css?family=Poppins:400,700&display=swap" rel="stylesheet" />
@@ -64,50 +114,11 @@ const Index = () => {
                 <a className="navbar-brand" href="index.html">
                   <img src="images/logo.png" alt="" />
                   <span>
-                    Welcome
+                    ANUMAAN
                   </span>
                 </a>
-                <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                  <span className="navbar-toggler-icon" />
-                </button>
-                <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                  <ul className="navbar-nav  ">
-                    <li className="nav-item active">
-                      <a className="nav-link" href="index.html">Home <span className="sr-only">(current)</span></a>
-                    </li>
-                    <li className="nav-item">
-                      <a className="nav-link" href="about.html"> About</a>
-                    </li>
-                    {/* <li class="nav-item">
-                <a class="nav-link" href="work.html">Work </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="category.html"> Category </a>
-              </li> */}
-                  </ul>
-                  <div className="user_option">
-                    <a href>
-                      <span>
-                        Login
-                      </span>
-                    </a>
-                    {/* <form class="form-inline my-2 my-lg-0 ml-0 ml-lg-4 mb-3 mb-lg-0">
-                <button class="btn  my-2 my-sm-0 nav_search-btn" type="submit"></button>
-              </form> */}
-                  </div>
-                </div>
-                <div>
-                  <div className="custom_menu-btn ">
-                    <button>
-                      <span className=" s-1">
-                      </span>
-                      <span className="s-2">
-                      </span>
-                      <span className="s-3">
-                      </span>
-                    </button>
-                  </div>
-                </div>
+                
+                
               </nav>
             </div>
           </header>
@@ -130,13 +141,17 @@ const Index = () => {
                       <div className="col-md-5 offset-md-1">
                         <div className="detail-box">
                           <h1>
-                            Find <br />
-                            Guess or<br />
-                            No Guess
+                            Welcome to <br />
+                            Anumaan <br />    
                           </h1>
-                          <p>
+
+
+                          
+                          
+                              
+                          {/* <p>
                             Provide us Feedback with an online Test.
-                          </p>
+                          </p> */}
                           <div className="btn-box">
                             <a href className="btn-1">
                               About Us
@@ -180,11 +195,78 @@ const Index = () => {
                     Give yourself an adrenaline dose with our online test. We have a wide range of tests to choose from. After the test provide us with feedbacks and get yourself some credit experience
                   </p>
                   <form onSubmit={handleSubmit}>
-                    <input type="text" placeholder="Name" value={name} onChange={e => setName(e.target.value)} required />
-                    <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-                    <input type="text" placeholder="Branch" value={branch} onChange={e => setBranch(e.target.value)} required />
-                    <div className="btn-box">
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
 
+                  <select
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select Institution
+                    </option>
+                    <option value="IIITD">IIITD</option>
+                    <option value="Other">Other</option>
+                  </select>
+
+                  {institution === "IIITD" && (
+                    <>
+                      <input
+                        type="text"
+                        placeholder="Batch"
+                        value={batch}
+                        onChange={(e) => setBatch(e.target.value)}
+                        required
+                      />
+                        <input
+                      type="text"
+                      placeholder="Branch"
+                      value={branch}
+                      onChange={(e) => setBranch(e.target.value)}
+                      required
+                    />
+                      <input
+                        type="text"
+                        placeholder="Roll No"
+                        value={rollNo}
+                        onChange={(e) => setRollNo(e.target.value)}
+                            required
+                          />
+                        </>
+                      )}
+
+                      {institution === "Other" && (
+                        <input
+                          type="text"
+                          placeholder="Ref ID"
+                          value={refID}
+                          onChange={(e) => setRefID(e.target.value)}
+                          required
+                        />
+                      )}
+
+                        <input
+                          type="tel"
+                          placeholder="Mobile Number"
+                          value={mobile}
+                          onChange={(e) => setMobile(e.target.value)}
+                          required
+                        />
+                    <div className="btn-box">
+                    {error && <p className="error-message">{error}</p>}
                     <button type="submit" className="btn-1">Register</button>
                     <button className="btn-1" >Read more</button>
                       {/* <a href className="btn-1" id="rmore">
@@ -289,9 +371,9 @@ const Index = () => {
               <h2>
                 About Us
               </h2>
-              <p>
+              {/* <p>
                 This site is a BTP project being done under the guidance of Dr. Pragma Kar (IIITD) . Aim of this project is to provide a platform where students can give online tests and provide feedbacks. The feedbacks will be used to help us detect if you guessed or not.
-              </p>
+              </p> */}
               <a href>
                 Read More
               </a>

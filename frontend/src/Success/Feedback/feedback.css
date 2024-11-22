@@ -1,4 +1,4 @@
-/* Test.css */
+
 .Guessed{
   max-width: fit-content;
   padding: 10px 10px;
@@ -34,10 +34,39 @@
     margin-bottom: 20px;
   }
   
-  .options {
+  .nt-options {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .nt-option-box {
+    width: 800px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+
+  .nt-option-box.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .nt-option-text {
+    margin: 0;
+    line-height: 1.5;
+    font-size: 1.1rem;
+    word-wrap: break-word;
   }
   
   .option {
@@ -93,6 +122,46 @@
   
   .next-button:hover {
     background-color: #45a049;
+  }
+  
+
+  .options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  .option-box {
+    width: 800px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .option-box:hover {
+    border-color: #007bff;
+    background-color: #eef5ff;
+  }
+  
+  .option-box.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .option-text {
+    margin: 0;
+    line-height: 1.5;
+    font-size: 1.1rem;
+    word-wrap: break-word;
   }
   
   button {

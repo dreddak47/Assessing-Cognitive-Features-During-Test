@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './testq.css'; // Import the CSS file
+import './feedback.css'; // Import the CSS file
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,7 +17,7 @@ const Feedback=({answers,timeTaken,seenFirst,submittedAfterSeen,answerstatus}) =
         axios.get(`${process.env.REACT_APP_BACKEND_BASEURL}/questions`)
           .then(response => {
               setQuestions(response.data)
-              setCurrentQuestion(0);
+              findNextSubmittedQuestion(0);
               setGuess(response.data.map(() => true));
             })
           .catch(error => console.error('There was an error!', error));
@@ -104,7 +104,17 @@ const Feedback=({answers,timeTaken,seenFirst,submittedAfterSeen,answerstatus}) =
   return (
     <div className="test-container">
       <h2 className="question">{questions[currentQuestion]?.question}</h2>
-      <form className="options">
+      <div className="nt-options">
+        {questions[currentQuestion]?.options.map((option, index) => (
+          <div
+            key={index}
+            className={`nt-option-box ${answers[currentQuestion] === index ? "selected" : ""}`}
+          >
+            <p className="option-text">{option}</p>
+          </div>
+        ))}
+      </div>
+      {/* <form className="options">
         {questions[currentQuestion]?.options.map((option, index) => (
           <div key={index} className="option">
             <input
@@ -119,16 +129,17 @@ const Feedback=({answers,timeTaken,seenFirst,submittedAfterSeen,answerstatus}) =
           </div>
         ))}
         <h3>{answerstatus[currentQuestion]}</h3>
-      </form>
+      </form> */}
       <div className="Guessed">
            <h2>Did You Guessed Your answer?</h2> 
+           <br></br>
            <button onClick={handleYes} style={{ backgroundColor: isYesSelected ? '#ddd' : '' }} >Yes</button>
           <button onClick={handleNo}>No</button>
            {/* Show additional options if "Yes" is selected */}
             {isYesSelected && (
               <div>
               <div className="guess-options">
-                <h3>Was your guess:</h3>
+                <h3>Choose Type of Guess:</h3>
                 <button
                   onClick={() => handleGuessType('random')}
                   className={guessType === 'random' ? 'selected' : ''}

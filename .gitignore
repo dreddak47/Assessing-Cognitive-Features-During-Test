@@ -26,6 +26,7 @@ yarn-error.log*
 frontend/.env
 frontend/.env.local
 frontend/.env.*.local
+
 server/.env
 server/.env.local
 server/.env.*.local

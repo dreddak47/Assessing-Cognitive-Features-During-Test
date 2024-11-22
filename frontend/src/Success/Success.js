@@ -8,9 +8,10 @@ function Success() {
   const location = useLocation();
   const namewe = location.state?.name;
   const answer = location.state?.answer;
+  const id = location.state?.id;
 
   const [loading, setLoading] = useState(true);
-  const [score, setScore] = useState(null);
+  //const [score, setScore] = useState(null);
   const [showComponent, setShowComponent] = useState(false);
   const [answerstate, setAnswerstate] = useState([]); 
 
@@ -18,9 +19,8 @@ function Success() {
     // Send a POST request to the server with the answer
     const getScore = async () => {
       try {
-        const response = await axios.post(`${process.env.REACT_APP_BACKEND_BASEURL}/getScore`, { answer });
-        setScore(response.data.score);
-        setAnswerstate(response.data.answerStatus);
+        const response = await axios.post(`${process.env.REACT_APP_BACKEND_BASEURL}/getScore`, { answer,id });
+        setAnswerstate(response.data.answersubmitted);
       } catch (error) {
         console.error('Error fetching score:', error);
       } finally {
@@ -49,14 +49,14 @@ function Success() {
 
       {loading ? (
         <div className="loading-container">
-          <p>Calculating your score, please wait...</p>
+          <p>Evaluating Your Test, please wait...</p>
           <div className="loading-bar">
             <div className="loading-progress"></div>
           </div>
         </div>
       ) : (
         <div className="score-container">
-          <p>Your score is: {score}</p>
+          <p>Your Test has been Evaluated! Your Test Report will be shared to you soon. Thanks for Your Time. See You Next Time around.</p>
           
         </div>
       )}
