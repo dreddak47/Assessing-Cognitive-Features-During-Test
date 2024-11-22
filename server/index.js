@@ -7,11 +7,7 @@ const path = require('path');
 
 const { createLogger, format, transports } = require('winston');
 
-// const httpTransportOptions = {
-//   host: 'http-intake.logs.us5.datadoghq.com',
-//   path: '/api/v2/logs?dd-api-key=7170f7a607a78b39fffe989ef678a7df&ddsource=nodejs&service=try-logs&ddtags=env:dev',
-//   ssl: true
-// };
+
 
 // const logger = createLogger({
 //   level: 'info',
@@ -205,17 +201,13 @@ app.post("/receive-gazer", async (req, res) => {
 
 function logfau(data){
   
+
+
   const httpTransportOptions = {
     host: 'http-intake.logs.us5.datadoghq.com',
-    path: '/api/v2/logs?dd-api-key=7170f7a607a78b39fffe989ef678a7df&ddsource=nodejs&service=FAU&ddtags=env:dev',
+    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=FAU&ddtags=env:dev`,
     ssl: true
   };
-
-  // const httpTransportOptions = {
-  //   host: 'http-intake.logs.us5.datadoghq.com',
-  //   path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=FAU&ddtags=env:dev`,
-  //   ssl: true
-  // };
 
   const logger = createLogger({
     level: 'info',
@@ -231,17 +223,13 @@ function logfau(data){
 }
 
 function loggazer(data){
+ 
+
   const httpTransportOptions = {
     host: 'http-intake.logs.us5.datadoghq.com',
-    path: '/api/v2/logs?dd-api-key=7170f7a607a78b39fffe989ef678a7df&ddsource=nodejs&service=gazer&ddtags=env:dev',
+    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=gazer&ddtags=env:dev`,
     ssl: true
   };
-
-  // const httpTransportOptions = {
-  //   host: 'http-intake.logs.us5.datadoghq.com',
-  //   path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=gazer&ddtags=env:dev`,
-  //   ssl: true
-  // };
 
   const logger = createLogger({
     level: 'info',

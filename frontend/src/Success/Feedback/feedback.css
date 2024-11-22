@@ -39,6 +39,7 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 15px;
+    pointer-events: none;
   }
 
   .nt-option-box {
