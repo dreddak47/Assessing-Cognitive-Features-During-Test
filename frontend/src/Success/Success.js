@@ -70,7 +70,6 @@ function Success() {
       {/* Conditionally render the component based on state */}
       {showComponent && <Feedback 
       answers={answer}
-      timeTaken={location.state?.timeTaken}
       seenFirst={location.state?.seenFirst}
       submittedAfterSeen={location.state?.submittedAfterSeen}
       answerstatus={answerstate}

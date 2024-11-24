@@ -165,7 +165,7 @@
     word-wrap: break-word;
   }
   
-  button {
+  .feedback_button {
     padding: 10px 20px;
     border: none;
     border-radius: 4px;
@@ -177,7 +177,7 @@
     transition: background-color 0.3s ease;
   }
   
-  button:hover {
+  .feedback_button:hover {
     background-color: #0056b3;
   }
   

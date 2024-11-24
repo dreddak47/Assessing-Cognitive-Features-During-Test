@@ -5,7 +5,7 @@
     box-sizing: border-box;
   }
   
-  /* Sidebar Container */
+  /* Sidebar Container
   .sidebar {
     position: fixed;
     left: 0;
@@ -18,10 +18,10 @@
     transition: width 0.3s ease;
     overflow: hidden;
   }
-  
-  .sidebar.collapsed {
+   */
+   /* .sidebar.collapsed {
     height: 20%;
-    width: 100px; /* Collapsed width */
+    width: 100px;
   }
 
   .testdetails{
@@ -52,41 +52,16 @@
     transition: right 0.3s ease;
   }
   
-  .sidebar.collapsed .toggle-btn {
+  /* .sidebar.collapsed .toggle-btn {
     right: 55px;
 
-  }
+  } */
   
   /* Nav Menu */
-  .nav-menu {
-    margin-top: 50px;
-    
-  }
   
-  .nav-menu ul {
-    list-style: none;
-  }
-  
-  .nav-menu li {
-    margin: 0px 0;
-    
-  }
-  
-  .nav-menu li a {
-    color: white;
-    text-decoration: none;
-    padding: 10px 20px;
-    display: block;
-    
-    transition: background-color 0.3s ease;
-  }
-  
-  .nav-menu li a:hover {
-    background-color: #575757;
-  }
   
   /* Responsive Sidebar */
-  @media screen and (max-width: 768px) {
+  /* @media screen and (max-width: 768px) {
     .sidebar {
       height:60%;
       width: 200px;
@@ -105,4 +80,4 @@
       font-size: 18px;
     }
   }
-  
+   */

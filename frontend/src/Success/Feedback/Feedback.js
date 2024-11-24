@@ -4,7 +4,7 @@ import './feedback.css'; // Import the CSS file
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
-const Feedback=({answers,timeTaken,seenFirst,submittedAfterSeen,answerstatus}) => {
+const Feedback=({answers,seenFirst,submittedAfterSeen,answerstatus}) => {
     const [questions, setQuestions] = useState([]);
     const [currentQuestion, setCurrentQuestion] = useState('');
     
@@ -14,23 +14,25 @@ const Feedback=({answers,timeTaken,seenFirst,submittedAfterSeen,answerstatus}) =
     const [Flag, setFlag] = useState('');
 
     useEffect(() => {
+        var newflag='none submitted';
+        for (let i = 0; i < answerstatus.length; i++) {
+            if (answerstatus[i] !== 'not submitted') {
+                newflag='few submitted';
+                break;
+            }
+        }
+        setFlag(newflag);
         axios.get(`${process.env.REACT_APP_BACKEND_BASEURL}/questions`)
           .then(response => {
               setQuestions(response.data)
-              findNextSubmittedQuestion(0);
+              if(newflag!=='none submitted'){
+                findNextSubmittedQuestion(0);
+              }
               setGuess(response.data.map(() => true));
             })
           .catch(error => console.error('There was an error!', error));
           
-          var newflag='none submitted';
-            for (let i = 0; i < answerstatus.length; i++) {
-                if (answerstatus[i] !== 'not submitted') {
-                    newflag='few submitted';
-                    break;
-                }
-            }
-            setFlag(newflag);
-            console.log("End of submitted questions");
+          
         
       }, []);
 
@@ -80,7 +82,7 @@ const Feedback=({answers,timeTaken,seenFirst,submittedAfterSeen,answerstatus}) =
         const handleGuessType = (type) => {
           setGuessType(type); // Set the selected guess type
         };
-        const TimeperQuestion = 50;
+
   
       if(Flag==='none submitted'){
         return(
@@ -169,7 +171,7 @@ const Feedback=({answers,timeTaken,seenFirst,submittedAfterSeen,answerstatus}) =
             )}
       </div>
       <div className="timer">
-        <h3>Time Taken: {TimeperQuestion-timeTaken[currentQuestion]} seconds</h3>
+        {/* <h3>Time Taken: {TimeperQuestion-timeTaken[currentQuestion]} seconds</h3> */}
         <h3>Seen First: {seenFirst[currentQuestion]>0?seenFirst[currentQuestion]:'Not seen'} {seenFirst[currentQuestion]>0?'Seconds':''}</h3>
         <h3>Submitted After Seen: {submittedAfterSeen[currentQuestion]>0?submittedAfterSeen[currentQuestion]:'Not submitted'} {submittedAfterSeen[currentQuestion]>0?'Seconds':''}</h3>
         </div>

@@ -33,6 +33,7 @@ const Sidebar=({Totaltime,name,handleEndTestClick}) => {
         </ul>
       </nav>
     </div>
+    
   );
 }
 

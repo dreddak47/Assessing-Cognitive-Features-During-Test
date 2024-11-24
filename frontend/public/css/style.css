@@ -18,9 +18,11 @@ form {
 }
 
 form .error-message {
+  font-size: 1 rem;
   color: red;
   font-weight: bold;
   padding: 10px;
+  margin-top: -5px;
 }
 
 input {
@@ -419,7 +421,7 @@ a:focus {
   display: flex;
   -ms-flex-wrap: wrap;
       flex-wrap: wrap;
-  margin: 45px -5px 0 -5px;
+  margin: 15px -5px 0 -5px;
 }
 
 .experience_section .detail-box .btn-box button {
@@ -913,5 +915,40 @@ a:focus {
 .menu_btn-style button .s-3 {
   -webkit-transform: rotate(-45deg) translate(8px, -8px);
           transform: rotate(-45deg) translate(8px, -8px);
+}
+
+.inline-spinner {
+  display: inline-block; /* Ensures it stays inline with text */
+  margin-left: 10px; /*Adds spacing between the text and the spinner */ 
+  vertical-align: middle; /* Aligns it with the middle of the text */
+}
+
+.spinner {
+  display: inline-block;
+  vertical-align: middle;
+  width:24px;
+  height: 24px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+h5{
+  font-size: 0.75rem;
+  font-weight: 200;
+  margin-left: 60px;
+  margin-right:20px;
+  display: inline-block;
+
 }
 /*# sourceMappingURL=style.css.map */

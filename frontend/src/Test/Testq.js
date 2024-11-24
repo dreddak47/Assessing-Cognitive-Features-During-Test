@@ -3,7 +3,7 @@ import axios from 'axios';
 import TestQ from './Component/camera/camera';
 import QuestionHeader from './Component/QuestionHeader/QuestionHeader'; 
 import './testq.css'; // Import the CSS file
-import Sidebar from './Component/sidebar/Sidebar';
+//import Sidebar from './Component/sidebar/Sidebar';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +15,7 @@ const Test = () => {
   const [answerstmp, setAnswerstmp] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [selectedOption, setSelectedOption] = useState(-1);
-  const [timeLeft, setTimeLeft] = useState([]);
+  // const [timeLeft, setTimeLeft] = useState([]);
   
   const [TotalTime, settotalTime] = useState(0);
   const [disbs, setdisbs] = useState([]);
@@ -26,6 +26,23 @@ const Test = () => {
   const location = useLocation();
   const namewe = location.state?.info;
   const id = location.state?.id;
+
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleEndTest = () => {
+    setShowPopup(true); // Show the popup
+  };
+
+  const closePopup = () => {
+    setShowPopup(false); // Close the popup
+  };
+
+  const confirmEndTest = () => {
+    // Logic to handle end test confirmation
+    console.log("Test ended");
+    setShowPopup(false);
+    // Navigate or perform any final actions here
+  };
 
   // useEffect(() => {
   //   const webgazer=window.webgazer;
@@ -77,14 +94,14 @@ const Test = () => {
   
 
 
-  const TimeperQuestion = 50;
+  const TimeperQuestion = 60;
   useEffect(() => {
     axios.get(`${process.env.REACT_APP_BACKEND_BASEURL}/questions`)
       .then(response => {
           setQuestions(response.data)
-          setTimeLeft(response.data.map(() => TimeperQuestion));
+          // setTimeLeft(response.data.map(() => TimeperQuestion));
           setAnswers(response.data.map(() => -1));
-          setdisbs(response.data.map(() => 0));
+          setdisbs(response.data.map(() => 2));
           setfirsttime(response.data.map(() => -1));
           setsfirsttime(response.data.map(() => -1));
           setAnswerstmp(response.data.map(() => -1));
@@ -119,37 +136,42 @@ const Test = () => {
     // Cleanup function to stop the timer when the component unmounts
     return () => clearInterval(interval);
   }, []);
-  
-  const [timerId, setTimerId] = useState(null);
+
+  const answersRef = useRef(answers);
   useEffect(() => {
-      if(questions.length >0){
+    answersRef.current = answers; // Keep the ref updated with the latest answers
+  }, [answers]);
+  
+ 
+  // useEffect(() => {
+  //     if(questions.length >0){
       
-      const newTimerId = setInterval(() => {
-      setTimeLeft(prevTimeLeft => {
-        const newTimeLeft = [...prevTimeLeft];
+  //     const newTimerId = setInterval(() => {
+  //     setTimeLeft(prevTimeLeft => {
+  //       const newTimeLeft = [...prevTimeLeft];
       
-        if (newTimeLeft[currentQuestion] >= 0 && disbs[currentQuestion]===0) {
-          newTimeLeft[currentQuestion] -=1;
-          if (newTimeLeft[currentQuestion] === 0) {
-            logEvent({
-              UserID: id,
-              EventType : 'QTimeout',
-              Time: questions.length*TimeperQuestion-TotalTime ,
-              Qn : currentQuestion
-            });
-            handleNext();
-            newTimeLeft[currentQuestion] -=1;
-          }
-        }
-        return newTimeLeft;
-      });
+  //       if (newTimeLeft[currentQuestion] >= 0 && disbs[currentQuestion]===0) {
+  //         newTimeLeft[currentQuestion] -=1;
+  //         if (newTimeLeft[currentQuestion] === 0) {
+  //           logEvent({
+  //             UserID: id,
+  //             EventType : 'QTimeout',
+  //             Time: questions.length*TimeperQuestion-TotalTime ,
+  //             Qn : currentQuestion
+  //           });
+  //           handleNext();
+  //           newTimeLeft[currentQuestion] -=1;
+  //         }
+  //       }
+  //       return newTimeLeft;
+  //     });
       
-    }, 1000);
-    setTimerId(newTimerId);
-    // Clean up timer when component unmounts
-  }
-    return () => clearInterval(timerId);
-  }, [currentQuestion]);
+  //   }, 1000);
+  //   setTimerId(newTimerId);
+  //   // Clean up timer when component unmounts
+  // }
+  //   return () => clearInterval(timerId);
+  // }, [currentQuestion]);
 
 
   //LOGGING FUNCTION
@@ -176,6 +198,9 @@ const Test = () => {
 
   const handleOptionSelect = (index) => {
     setSelectedOption(index);
+    const newdisbs = [...disbs];
+    newdisbs[currentQuestion] = 0;
+    setdisbs(newdisbs);
     const newAnswerstmp = [...answerstmp];
     newAnswerstmp[currentQuestion] = index;
     setAnswerstmp(newAnswerstmp);
@@ -194,8 +219,7 @@ const Test = () => {
       Time: questions.length*TimeperQuestion-TotalTime,
       Qn : currentQuestion,
       Qnto : index,
-      submitted: disbs[currentQuestion]===1?"Yes":"No",
-      TimeLeft: TimeperQuestion-timeLeft[currentQuestion]
+      submitted: disbs[currentQuestion]===1?"Yes":"No"
     });
 
     //logEvent(`Question: ${currentQuestion} to ${index} | submitted: ${disbs[currentQuestion]===1?"Yes":"No"} | TimeLeft: ${TimeperQuestion-timeLeft[currentQuestion]} seconds`);
@@ -245,7 +269,6 @@ const Test = () => {
       Time: questions.length*TimeperQuestion-TotalTime ,
       Qn : currentQuestion ,
       Soption: selectedOption,
-      timeTaken : TimeperQuestion-timeLeft[currentQuestion],
       FirsttimeSeen : firsttime[currentQuestion] ,
       Timefromfirstseen : newsfirsttime[currentQuestion]
     });
@@ -265,22 +288,40 @@ const Test = () => {
 
   
   const end = (e) => {
-    e.preventDefault(); // Prevent default link behavior
     logEvent({
       UserID: id,
       EventType : 'END',
       Time: questions.length*TimeperQuestion-TotalTime
     });
-    navigate('/success',{state:{name:namewe,id:id,answer:answers,timeTaken:timeLeft,seenFirst:firsttime,submittedAfterSeen:sfirsttime}}); // Call the endTest function
+    console.log(answersRef.current);
+    navigate('/success',{state:{name:namewe,id:id,answer:answersRef.current,seenFirst:firsttime,submittedAfterSeen:sfirsttime}}); // Call the endTest function
   };
 
   if (!questions.length) return <div>If your test has not started, please reload</div>;
 
   return (
-    <div >
-    <Sidebar Totaltime={TotalTime} name={namewe} handleEndTestClick={end}/>
+  <div className="container">
+    <div className="sidebar">
+      
+      <nav className="nav-menu">
+        <a><h3 className='name_nav'><b>Name: {namewe}</b></h3></a>
+        <h3><b>Time Left : {Math.floor(TotalTime / 60) }m {TotalTime % 60 }s</b></h3>
+        <h1>Knowledge Knockout</h1>
+        <p><ul>
+            <li> <b>Section 1</b> : HCI</li>
+            <li> <b>Section 2</b> : IP</li>
+            <li> <b>Section 3</b> : Maths</li>
+          </ul>
+        </p>
+        <br></br>
+        <a className="endtest"  onClick={handleEndTest}><b>End Test</b></a>
+     
+      </nav>
+      
+    </div>
+    <div className="cnt">
     <div className="test-container">
-      <TestQ />
+      {/* <TestQ /> */}
       {/* <div>
           <video ref={videoRef} autoPlay muted width="640" height="480" style={{ display: "none" }} />
           <canvas ref={canvasRef} width="640" height="480" style={{ display: "none" }} />
@@ -303,29 +344,32 @@ const Test = () => {
           </div>
         ))}
       </div>
-      {/* <form className="options">
-        {questions[currentQuestion].options.map((option, index) => (
-          <div key={index} className="option">
-            <input
-              type="radio"
-              id={`option${index}${currentQuestion}`}
-              name={`option${index}`}
-              value={index}
-              checked={selectedOption === index || answerstmp[currentQuestion] === index}
-              onChange={handleOptionChange}
-            />
-            <label htmlFor={`option${index}`}>{option}</label>
-          </div>
-        ))}
-      </form> */}
       <div className="button-container">
         <button onClick={handlePrev} disabled={currentQuestion===0}>Previous</button>
-        <button onClick={handlesubmit} disabled={timeLeft[currentQuestion]<=0 || disbs[currentQuestion]===1}>Submit</button>
+        <button onClick={handlesubmit} disabled={disbs[currentQuestion]!==0} className={`submit_${disbs[currentQuestion]===2 ? "ns":"s"}`}>Submit</button>
         <button onClick={handleNext} disabled={currentQuestion===questions.length-1}>Next</button>
       </div>
-      <div className="timer">Time left: {timeLeft[currentQuestion]>0?timeLeft[currentQuestion]:0} seconds</div>
+      {/* <div className="timer">Time left: {timeLeft[currentQuestion]>0?timeLeft[currentQuestion]:0} seconds</div> */}
     </div>
 
+    </div>
+    {/* Popup Overlay */}
+    {showPopup && (
+        <div className="popup-overlay">
+          <div className="popup">
+            <h3>End Test</h3>
+            <p>Are you sure you want to end the test?</p>
+            <div className="popup-buttons">
+              <button className="confirm-btn" onClick={end}>
+                Yes, End Test
+              </button>
+              <button className="cancel-btn" onClick={closePopup} >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
 

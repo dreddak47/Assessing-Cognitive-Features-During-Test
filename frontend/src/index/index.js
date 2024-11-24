@@ -15,6 +15,8 @@ const Index = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(false);
+
 
   // webgazer.setGazeListener(function(data, elapsedTime) {
   //   if (data == null) {
@@ -51,12 +53,15 @@ const Index = () => {
     }else if(institution === "Other"){
       data={name,email,institution,mobile,refID};
     }
+    setLoading(true);
     axios.post(`${process.env.REACT_APP_BACKEND_BASEURL}/register`, data)
       .then(response => {
+        setLoading(false);
         console.log(response.data.id);
-        navigate('/test',{ state: { info: name, id : response.data.id} });
+        navigate('/instruction',{ state: { info: name, id : response.data.id} });
       })
       .catch(error => {
+        setLoading(false);
         console.error('There was an error!', error)
         if (error.response && error.response.data) {
           setError(error.response.data.error); // Backend-provided error
@@ -156,7 +161,7 @@ const Index = () => {
                             <a href className="btn-1">
                               About Us
                             </a>
-                            <a href className="btn-2">
+                            <a href="#findtest" className="btn-2">
                               Find a Test
                             </a>
                           </div>
@@ -177,14 +182,14 @@ const Index = () => {
         </div>
         {/* experience section */}
         <section className="experience_section layout_padding">
-          <div className="container">
+          <div id="findtest" className="container">
             <div className="row">
               <div className="col-md-5">
                 <div className="img-box">
                   <img src="images/experience-img.jpg" alt="" />
                 </div>
               </div>
-              <div className="col-md-7">
+              <div  className="col-md-7">
                 <div className="detail-box">
                   <div className="heading_container">
                     <h2>
@@ -265,16 +270,17 @@ const Index = () => {
                           onChange={(e) => setMobile(e.target.value)}
                           required
                         />
+                        
+                        <div classname="inline spinner">
+                          <h5> Please Provide with correct RefID/RollNo  </h5>
+                          {loading && 
+                            <div className="spinner "></div>}
+                        </div>
+                        
                     <div className="btn-box">
-                    {error && <p className="error-message">{error}</p>}
-                    <button type="submit" className="btn-1">Register</button>
-                    <button className="btn-1" >Read more</button>
-                      {/* <a href className="btn-1" id="rmore">
-                        Read More
-                      </a>
-                      <a className="btn-1" id="register">
-                        Register
-                      </a> */}
+                      {error && <p className="error-message">{error}</p>}
+                      <button type="submit" className="btn-1">Start Test</button>
+                      <button className="btn-1" >Read more</button>
                     </div> 
                   </form>
                   
@@ -448,7 +454,7 @@ const Index = () => {
                 <div className="info_logo">
                   <img src="images/logo.png" alt="" />
                   <span>
-                    Guess or No Guess
+                    Anumaan
                   </span>
                 </div>
               </div>

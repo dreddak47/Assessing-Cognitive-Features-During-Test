@@ -38,6 +38,9 @@ app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 
+
+const usedb=true;
+
 // Mock database (in-memory)
 const users = [];
 const questions = [
@@ -54,39 +57,43 @@ const questions = [
 app.post('/register', async (req, response) => {
   const { name, email, institution, mobile, ...edata } = req.body;
   try{
-  
-  let querySnapshot1={};
-  if(institution === 'IIITD'){
-    querySnapshot1 = await db.collection('creation')
-      .where('RollNo', '==', edata['rollNo'])
-      .get();
-  }else{
-    querySnapshot1 = await db.collection('creation')
-      .where('RefID', '==', edata['refID'])
-      .get();
-  }
+  if(usedb){
+    let querySnapshot1={};
+    if(institution === 'IIITD'){
+      querySnapshot1 = await db.collection('creation')
+        .where('RollNo', '==', edata['rollNo'])
+        .get();
+    }else{
+      querySnapshot1 = await db.collection('creation')
+        .where('RefID', '==', edata['refID'])
+        .get();
+    }
 
-  if (querySnapshot1.empty) {
-    response.status(400).json({ message: "ERROR", error : "Given RefID/RollNo is not valid . Contact Administrator" });
+    if (querySnapshot1.empty) {
+      response.status(400).json({ message: "ERROR", error : "Given RefID/RollNo is not valid . Contact Administrator" });
+      
+    }else{
+      await db.collection('users').add({
+        name,
+        email,
+        institution,
+        edata // Spread the entire body into the Firestore document
+      });
+      const querySnapshot2 = await db.collection('users')
+        .where('name', '==', name)
+        .get();
     
-  }else{
-    await db.collection('users').add({
-      name,
-      email,
-      institution,
-      edata // Spread the entire body into the Firestore document
+    const docIds = [];
+    querySnapshot2.forEach(doc => {
+      docIds.push(doc.id);
     });
-    const querySnapshot2 = await db.collection('users')
-      .where('name', '==', name)
-      .get();
-  
-  const docIds = [];
-  querySnapshot2.forEach(doc => {
-    docIds.push(doc.id);
-  });
-  const id = docIds[0];
-  response.status(201).json({ message: "Registered successfully", user: { name, email, institution, mobile, ...edata} ,id: id});
+    const id = docIds[0];
+    response.status(201).json({ message: "Registered successfully", user: { name, email, institution, mobile, ...edata} ,id: id});
+    }
+  }else{
+    response.status(201).json({ message: "Registered successfully", user: { name, email, institution, mobile, ...edata} ,id: 1});
   }
+  
 
   
 }catch (error) {
@@ -127,12 +134,14 @@ app.post('/getscore', async (req, res) => {
       answersubmitted.push("submitted");
     }
   });
-  await db.collection(`${id}_logs`).add({
-    UserID: id,
-    score,
-    answerStatus
-  });
 
+  if(usedb){
+    await db.collection('users').doc(id).collection(`${id}_logs`).add({
+      UserID: id,
+      score,
+      answerStatus
+    });
+  }
   // Send both the score and answer status back to the client
   res.json({ score, answersubmitted });
 });
@@ -144,18 +153,20 @@ app.post('/log', async (req, res) => {
     const logData = req.body;
     //console.log(logData['UserID']);
     // console.log(JSON.stringify(logData));
+    if(usedb){
+      id=logData['UserID'];
 
-    id=logData['UserID'];
 
+      if (!logData || typeof logData !== 'object') {
+        return res.status(400).send('Invalid log data');
+      }
 
-    if (!logData || typeof logData !== 'object') {
-      return res.status(400).send('Invalid log data');
+      //   
+      await db.collection('users').doc(id).collection(`${id}_logs`).add({
+        ...logData, // Spread the entire body into the Firestore document
+      });
     }
-
-    //   
-    await db.collection(`${id}_logs`).add({
-      ...logData, // Spread the entire body into the Firestore document
-    });
+    
 
     res.status(200).send('Event logged successfully in Firestore');
   } catch (error) {
