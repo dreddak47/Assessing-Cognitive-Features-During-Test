@@ -1,6 +1,6 @@
 import React, {useRef,  useEffect, useState } from 'react';
 import axios from 'axios';
-import TestQ from './Component/camera/camera';
+import Cam from './Component/camera/camera';
 import QuestionHeader from './Component/QuestionHeader/QuestionHeader'; 
 import './testq.css'; // Import the CSS file
 //import Sidebar from './Component/sidebar/Sidebar';
@@ -43,14 +43,14 @@ const Test = () => {
     setShowPopup(false);
     // Navigate or perform any final actions here
   };
-
+  
   // useEffect(() => {
   //   const webgazer=window.webgazer;
   //   webgazer.setGazeListener((data, elapsedTime)=>{
-  //     // console.log(data,elapsedTime);
-  //     axios
-  //     .post("http://localhost:5000/receive-gazer", { data,elapsedTime })
-  //     .catch((error) => console.error("Error sending frame to Node.js: ", error));
+  //     //console.log(data,elapsedTime);
+  //     // axios
+  //     // .post("http://localhost:5000/receive-gazer", { data,elapsedTime })
+  //     // .catch((error) => console.error("Error sending frame to Node.js: ", error));
   //   }).begin();
   // }, []);
 
@@ -90,6 +90,10 @@ const Test = () => {
 
   //   return () => clearInterval(intervalId);
   // }, []);
+  // <div>
+  //         <video ref={videoRef} autoPlay muted width="640" height="480" style={{ display: "none" }} />
+  //         <canvas ref={canvasRef} width="640" height="480" style={{ display: "none" }} />
+  //       </div>
 
   
 
@@ -108,7 +112,7 @@ const Test = () => {
           logEvent({
             UserID: id,
             EventType : 'START',
-            Time: 0
+            TimeElapsed: 0
           });
           setCurrentQuestion(0);
           setfirsttime(prevState => [1, ...prevState.slice(1)]);
@@ -216,7 +220,7 @@ const Test = () => {
     logEvent({
       UserID: id,
       EventType : 'QChange',
-      Time: questions.length*TimeperQuestion-TotalTime,
+      TimeElapsed: questions.length*TimeperQuestion-TotalTime,
       Qn : currentQuestion,
       Qnto : index,
       submitted: disbs[currentQuestion]===1?"Yes":"No"
@@ -229,7 +233,7 @@ const Test = () => {
       logEvent({
         UserID: id,
         EventType : 'Qfirstseen',
-        Time: questions.length*TimeperQuestion-TotalTime,
+        TimeElapsed: questions.length*TimeperQuestion-TotalTime,
         Qn : index,
         FirsttimeSeen : newfirsttime[index]
       });
@@ -244,7 +248,7 @@ const Test = () => {
     logEvent({
       UserID: id,
       EventType : 'NEXT',
-      Time: questions.length*TimeperQuestion-TotalTime
+      TimeElapsed: questions.length*TimeperQuestion-TotalTime
     });
 
     handleQuestionClick(currentQuestion+1)
@@ -266,11 +270,11 @@ const Test = () => {
     logEvent({
       UserID: id,
       EventType : 'QSubmit',
-      Time: questions.length*TimeperQuestion-TotalTime ,
+      TimeElapsed: questions.length*TimeperQuestion-TotalTime ,
       Qn : currentQuestion ,
       Soption: selectedOption,
       FirsttimeSeen : firsttime[currentQuestion] ,
-      Timefromfirstseen : newsfirsttime[currentQuestion]
+      ResponseTime : newsfirsttime[currentQuestion]
     });
     //logEvent(`Submitted Question: ${currentQuestion} -> ${selectedOption} | timeTaken : ${TimeperQuestion-timeLeft[currentQuestion]} seconds | FirsttimeSeen : ${firsttime[currentQuestion]} seconds | Timefromfirstseen : ${newsfirsttime[currentQuestion]} seconds`);
     handleNext(); 
@@ -280,7 +284,7 @@ const Test = () => {
     logEvent({
       UserID: id,
       EventType : 'PREV',
-      Time: questions.length*TimeperQuestion-TotalTime
+      TimeElapsed: questions.length*TimeperQuestion-TotalTime
     });
     handleQuestionClick(currentQuestion-1)
   };
@@ -288,10 +292,11 @@ const Test = () => {
 
   
   const end = (e) => {
+    
     logEvent({
       UserID: id,
       EventType : 'END',
-      Time: questions.length*TimeperQuestion-TotalTime
+      TimeElapsed: questions.length*TimeperQuestion-TotalTime
     });
     console.log(answersRef.current);
     navigate('/success',{state:{name:namewe,id:id,answer:answersRef.current,seenFirst:firsttime,submittedAfterSeen:sfirsttime}}); // Call the endTest function
@@ -321,7 +326,9 @@ const Test = () => {
     </div>
     <div className="cnt">
     <div className="test-container">
-      {/* <TestQ /> */}
+      <Cam 
+      id={id}
+      />
       {/* <div>
           <video ref={videoRef} autoPlay muted width="640" height="480" style={{ display: "none" }} />
           <canvas ref={canvasRef} width="640" height="480" style={{ display: "none" }} />
@@ -332,7 +339,9 @@ const Test = () => {
         handleQuestion={handleQuestionClick} 
       />
       
-      <h2 className="question">{questions[currentQuestion].question}</h2>
+      <h2 className="question" dangerouslySetInnerHTML={{
+        __html: questions[currentQuestion].question,
+      }}/>
       <div className="options">
         {questions[currentQuestion].options.map((option, index) => (
           <div

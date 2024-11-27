@@ -73,6 +73,7 @@ function Success() {
       seenFirst={location.state?.seenFirst}
       submittedAfterSeen={location.state?.submittedAfterSeen}
       answerstatus={answerstate}
+      id={id}
       />}
     </div>
   );

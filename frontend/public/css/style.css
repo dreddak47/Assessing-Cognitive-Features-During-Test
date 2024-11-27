@@ -422,6 +422,8 @@ a:focus {
   -ms-flex-wrap: wrap;
       flex-wrap: wrap;
   margin: 15px -5px 0 -5px;
+    justify-content: center; /* Horizontal centering */
+  align-items: center; 
 }
 
 .experience_section .detail-box .btn-box button {
@@ -441,6 +443,7 @@ a:focus {
   border: 1px solid transparent;
   border-radius: 0;
   width: 47%;
+  
 }
 
 .experience_section .detail-box .btn-box .btn-1:hover {

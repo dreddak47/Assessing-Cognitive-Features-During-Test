@@ -39,19 +39,11 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 
 
-const usedb=true;
+const usedb=false;
 
 // Mock database (in-memory)
 const users = [];
-const questions = [
-  { id: 1, question: "What is 2 + 2?", options: ["3", "4", "5"], answer: 1 },
-  { id: 2, question: "What is the capital of France?", options: ["Berlin", "Paris", "Madrid"], answer: 1 },
-  { id: 3, question: "What is the capital of Germany?", options: ["Berlin", "Paris", "Madrid"], answer: 0},
-  { id: 4, question: "What is the capital of Spain?", options: ["Berlin", "Paris", "Madrid"], answer: 2 },
-  { id: 5, question: "What is x+y?", options: ["0","1","2"], answer: 1 },
-  { id: 6, question: "What is x+ey?", options: ["0","1e","2"], answer: 2 }
-    // Add more questions as needed
-];
+const questions = require('./question.json');
 
 // Register route
 app.post('/register', async (req, response) => {
@@ -175,48 +167,97 @@ app.post('/log', async (req, res) => {
   }
 });
 
+let notr = 0;
+let arr = [0,1,2,3,4,5,6,7,8,9,10,11];
+const imageLog=[];
+const randomSize = Math.floor(Math.random() * (11)) + 5;
+function getRandomSubset(arr, min, max) {
+  // Shuffle the array using Fisher-Yates Shuffle
+  for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  // Determine a random size between min and max
+  const randomSize = Math.floor(Math.random() * (max - min + 1)) + min;
+  return arr.slice(0, randomSize);
+}
+
+const session = require("express-session");
+const { time } = require('console');
+app.use(session({
+  secret: "xy1",    // Used to sign the session ID cookie
+  resave: false,                // Prevents resaving session if nothing changes
+  saveUninitialized: true,      // Forces a session to be saved even if unmodified
+  cookie: { secure: false }     // Set to true if using HTTPS
+}));
 
 app.post("/receive-image", async (req, res) => {
-  const { frame } = req.body;
-
-  if (!frame) {
-    return res.status(400).send("No frame received");
-  }
-
-  try {
-    // Forward the frame to the Flask server
-    const flaskResponse = await axios.post("http://localhost:8000/process", { frame });
-    
-    // Log the response from Flask
-    console.log("Response from Flask:", flaskResponse.data);
-    logfau(flaskResponse.data);
-
-    // Send the Flask server's response back to the React frontend
-    res.status(200).json({
-      message: "Frame processed successfully",
-      flaskResponse: flaskResponse.data,
-    });
-  } catch (error) {
-    console.error("Error forwarding to Flask:", error.message);
-    res.status(500).send("Error forwarding to Flask");
-  }
-});
-
-app.post("/receive-gazer", async (req, res) => {
-    const {data,time} =req.body;
-    loggazer(req.body);
-    res.status(200).json({
-      message: "gazer processed successfully",
-    });
-});
-
-function logfau(data){
+  const { frame,id } = req.body;
   
 
+  // if (!frame) {
+  //   return res.status(400).send("No frame received");
+  // }
+  if(usedb){
+    
+    try {
+        const flaskResponse = await axios.post("http://localhost:8000/process", req.body, {
+          headers: { "Content-Type": "application/json" }
+        });
+  
+       const fau=flaskResponse.data;
+      logfau({ fau, id ,timestamp: new Date().toISOString()});
+      }catch (error) {
+      console.error("Error forwarding to Flask:", error.message);
+      return res.status(500).send("Error forwarding to Flask");
+    }
+  
+    res.status(200).json({ message: "Frame processed successfully" });
+  }else{
+    res.status(200).json({
+      message: "Frame processed successfully",
+    });
+  }
+  
+});
 
+app.post("/receive-expression", async (req, res) => {
+  const {maxEmotion,id,ts} = req.body;
+
+  // if (!expressions) {
+  //   return res.status(400).send("No frame received");
+  // }
+  if(usedb){
+    try {
+      
+      logexpression(req.body);
+  
+      // Send the Flask server's response back to the React frontend
+      res.status(200).json({
+        message: "Frame processed successfully",
+        
+      });
+    } catch (error) {
+      console.error("Error forwarding to Flask:", error.message);
+      res.status(500).send("Error forwarding to Flask");
+    }
+  }else{
+    //console.log(req.body);
+    res.status(200).json({
+      message: "Frame processed successfully",
+    });
+  }
+  
+});
+
+
+
+function logfau(data){
+  const {fau,id,ts}=data;
+  // console.log(data);
   const httpTransportOptions = {
     host: 'http-intake.logs.us5.datadoghq.com',
-    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=FAU&ddtags=env:dev`,
+    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=FAU&ddtags=id:${id}`,
     ssl: true
   };
 
@@ -230,15 +271,14 @@ function logfau(data){
   });
 
   module.exports = logger;
-  logger.info(data,{type: 'FAU' });
+  logger.info(data,{type: 'FAU' ,id:id});
 }
 
-function loggazer(data){
- 
-
+function logexpression(data){
+  const {maxEmotion,id,ts}=data
   const httpTransportOptions = {
     host: 'http-intake.logs.us5.datadoghq.com',
-    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=gazer&ddtags=env:dev`,
+    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=expression&ddtags=id:${id}`,
     ssl: true
   };
 
@@ -252,34 +292,10 @@ function loggazer(data){
   });
 
   module.exports = logger;
-  logger.info(data,{type: 'GAZER' });
+  logger.info(data,{type: 'EXPRESSION',id:id });
+
 }
 
-// const storage = multer.diskStorage({
-//   destination:"./uploads",
-//   filename: (req, file, cb) => {
-//     cb(null, `${Date.now()}__${file.originalname}`); // Appends timestamp to original file name
-//   },
-// });
-
-// const upload = multer({ 
-//   storage: storage,
-//   limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50MB
-// }).single('image'); // Expecting a single file with field name 'image'
-
-// app.post('/upload', (req, res) => {
-//   upload(req, res, function (err) {
-//     if (err instanceof multer.MulterError) {
-//       return res.status(400).send({ message: 'File too large!' });
-//       console.log("not file uploaded successfully");
-//     } else if (err) {
-//       return res.status(500).send({ message: 'Failed to upload file!' });
-//       console.log("not file uploaded successfully");
-//     }
-//     res.status(200).send({ message: 'Upload successful!', file: req.file });
-//     console.log("file uploaded successfully")
-//   });
-// });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

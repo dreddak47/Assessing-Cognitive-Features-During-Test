@@ -158,9 +158,6 @@ const Index = () => {
                             Provide us Feedback with an online Test.
                           </p> */}
                           <div className="btn-box">
-                            <a href className="btn-1">
-                              About Us
-                            </a>
                             <a href="#findtest" className="btn-2">
                               Find a Test
                             </a>
@@ -280,7 +277,7 @@ const Index = () => {
                     <div className="btn-box">
                       {error && <p className="error-message">{error}</p>}
                       <button type="submit" className="btn-1">Start Test</button>
-                      <button className="btn-1" >Read more</button>
+                      {/* <button className="btn-1" >Read more</button> */}
                     </div> 
                   </form>
                   
@@ -447,7 +444,7 @@ const Index = () => {
   </section> */}
         {/* end client section */}
         {/* info section */}
-        <section className="info_section ">
+        {/* <section className="info_section ">
           <div className="info_container layout_padding-top">
             <div className="container">
               <div className="info_top">
@@ -468,7 +465,7 @@ const Index = () => {
                       Readable content of a page when looking at its layoutreadable content of a page when looking at its layout
                     </p>
                   </div>
-                  {/* <div class="col-md-3  offset-lg-1">
+                  <div class="col-md-3  offset-lg-1">
               <div class="info_form ">
                 <h5>
                   
@@ -480,7 +477,7 @@ const Index = () => {
                   </button>
                 </form>
               </div>
-            </div> */}
+            </div>
                 </div>
               </div>
               <div className="row">
@@ -517,7 +514,7 @@ const Index = () => {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
         {/* end info section */}
         {/* footer section */}
         <footer className="container-fluid footer_section ">

@@ -1,108 +1,253 @@
-
 import * as faceapi from 'face-api.js';
-import React from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 
-function TestQ() {
-
-  const [modelsLoaded, setModelsLoaded] = React.useState(false);
-  const [captureVideo, setCaptureVideo] = React.useState(false);
-
-  const videoRef = React.useRef();
+function Cam(id) {
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  // const id = idj.id;
   const videoHeight = 480;
   const videoWidth = 640;
-  const canvasRef = React.useRef();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // Load FaceAPI models
     const loadModels = async () => {
       const MODEL_URL = process.env.PUBLIC_URL + '/models';
-
-      Promise.all([
+      await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-      ]).then(setModelsLoaded(true));
-    }
+      ]);
+      setModelsLoaded(true);
+    };
+
     loadModels();
   }, []);
 
-  const startVideo = () => {
-    setCaptureVideo(true);
-    navigator.mediaDevices
-      .getUserMedia({ video: { width: 300 } })
-      .then(stream => {
-        let video = videoRef.current;
-        video.srcObject = stream;
-        video.play();
-      })
-      .catch(err => {
-        console.error("error:", err);
-      });
-  }
+  useEffect(() => {
+    // Access webcam
+    const startVideo = () => {
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          let video = videoRef.current;
+          video.srcObject = stream;
+          video.play();
+        })
+        .catch((err) => console.error('Error accessing webcam: ', err));
+    };
 
-  const handleVideoOnPlay = () => {
-    setInterval(async () => {
-      if (canvasRef && canvasRef.current) {
-        canvasRef.current.innerHTML = faceapi.createCanvasFromMedia(videoRef.current);
-        const displaySize = {
-          width: videoWidth,
-          height: videoHeight
+    if (modelsLoaded) {
+      startVideo();
+    }
+  }, [modelsLoaded]);
+  const emotionLogs = [];
+  const img=0;
+  // Model 1: Analyze expressions locally
+  const analyzeExpressions = useCallback(async () => {
+    if (videoRef.current && modelsLoaded) {
+      const detections = await faceapi
+        .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceExpressions();
+
+      if (detections.length > 0) {
+        const expressions = detections[0].expressions;
+        const maxEmotion = Object.entries(expressions).reduce((max, current) => {
+          return current[1] > max[1] ? current : max;
+        }, ["", -Infinity]);
+        
+        //console.log(`Max emotion: ${maxEmotion[0]} (${maxEmotion[1]})`;
+        const id=id.id;
+        emotionLogs.push({maxEmotion,id,timestamp:new Date().toISOString() });
+        console.log(id);
+        if (emotionLogs.length >= 100) { // Assuming 10 emotions/sec
+            axios
+          .post("http://localhost:5000/receive-expression", emotionLogs)
+          .then((res) => console.log("Expression sent successfully"))
+          .catch((error) => console.error("Error sending expression to server: ", error));
+          emotionLogs.length = 0; // Clear the logs after sending
         }
-
-        faceapi.matchDimensions(canvasRef.current, displaySize);
-
-        const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
-
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
-
-        canvasRef && canvasRef.current && canvasRef.current.getContext('2d').clearRect(0, 0, videoWidth, videoHeight);
-        canvasRef && canvasRef.current && faceapi.draw.drawDetections(canvasRef.current, resizedDetections);
-        canvasRef && canvasRef.current && faceapi.draw.drawFaceLandmarks(canvasRef.current, resizedDetections);
-        canvasRef && canvasRef.current && faceapi.draw.drawFaceExpressions(canvasRef.current, resizedDetections);
+        
       }
-    }, 100)
-  }
+    }
+  }, [modelsLoaded]);
 
-  const closeWebcam = () => {
-    videoRef.current.pause();
-    videoRef.current.srcObject.getTracks()[0].stop();
-    setCaptureVideo(false);
-  }
+  // Model 2: Send frames to server
+  const sendFramesToServer = useCallback(() => {
+    if (canvasRef.current && videoRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+
+      // Draw current video frame to canvas
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert canvas to Base64 image
+      const image = canvas.toDataURL("image/jpeg");
+      
+      //console.log(image);
+      // Send the frame to Flask server
+      axios
+        .post("http://localhost:5000/receive-image", { frame: img ,id:id.id })
+        .then((res) => console.log("Frame sent successfully"))
+        .catch((error) => console.error("Error sending frame to server: ", error));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (modelsLoaded) {
+      // Run expression analysis every 100ms
+      const expressionInterval = setInterval(() => {
+        analyzeExpressions();
+      }, 40);
+
+      // Send frames to the server every 3 seconds
+      const serverInterval = setInterval(() => {
+        sendFramesToServer();
+      }, 1000);
+
+      return () => {
+        clearInterval(expressionInterval);
+        clearInterval(serverInterval);
+      };
+    }
+  }, [modelsLoaded, analyzeExpressions, sendFramesToServer]);
 
   return (
     <div>
-      <div style={{ textAlign: 'center', padding: '10px' }}>
-        {
-          captureVideo && modelsLoaded ?
-            <button onClick={closeWebcam} style={{ cursor: 'pointer', backgroundColor: 'green', color: 'white', padding: '15px', fontSize: '10px', border: 'none', borderRadius: '10px' }}>
-              Close Webcam
-            </button>
-            :
-            <button onClick={startVideo} style={{ cursor: 'pointer', backgroundColor: 'green', color: 'white', padding: '15px', fontSize: '10px', border: 'none', borderRadius: '10px' }}>
-              Open Webcam
-            </button>
-        }
-      </div>
-      {
-        captureVideo ?
-          modelsLoaded ?
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '10px' }}>
-                <video ref={videoRef} height={videoHeight} width={videoWidth} onPlay={handleVideoOnPlay} style={{ borderRadius: '10px' }} />
-                <canvas ref={canvasRef} style={{ position: 'absolute' }} />
-              </div>
-            </div>
-            :
-            <div>loading...</div>
-          :
-          <>
-          </>
-      }
+      {modelsLoaded ? (
+        <div>
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            width={videoWidth}
+            height={videoHeight}
+            style={{ display: "none" }} // Hide the video element
+          />
+          <canvas
+            ref={canvasRef}
+            width={videoWidth}
+            height={videoHeight}
+            style={{ display: "none" }} // Hide the canvas element
+          />
+          <div>Models are running...</div>
+        </div>
+      ) : (
+        <div>Loading models...</div>
+      )}
     </div>
   );
 }
 
-export default TestQ;
+export default Cam;
+// import * as faceapi from 'face-api.js';
+// import React from 'react';
+
+// function TestQ() {
+
+//   const [modelsLoaded, setModelsLoaded] = React.useState(false);
+//   const [captureVideo, setCaptureVideo] = React.useState(false);
+
+//   const videoRef = React.useRef();
+//   const videoHeight = 480;
+//   const videoWidth = 640;
+//   const canvasRef = React.useRef();
+
+//   React.useEffect(() => {
+//     const loadModels = async () => {
+//       const MODEL_URL = process.env.PUBLIC_URL + '/models';
+
+//       Promise.all([
+//         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+//         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+//         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+//         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+//       ]).then(setModelsLoaded(true));
+//     }
+//     loadModels();
+//   }, []);
+
+//   const startVideo = () => {
+//     setCaptureVideo(true);
+//     navigator.mediaDevices
+//       .getUserMedia({ video: { width: 300 } })
+//       .then(stream => {
+//         let video = videoRef.current;
+//         video.srcObject = stream;
+//         video.play();
+//       })
+//       .catch(err => {
+//         console.error("error:", err);
+//       });
+//   }
+
+//   const handleVideoOnPlay = () => {
+//     setInterval(async () => {
+//       if (canvasRef && canvasRef.current) {
+//         canvasRef.current.innerHTML = faceapi.createCanvasFromMedia(videoRef.current);
+//         const displaySize = {
+//           width: videoWidth,
+//           height: videoHeight
+//         }
+
+//         faceapi.matchDimensions(canvasRef.current, displaySize);
+
+//         const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
+
+//         const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+//         canvasRef && canvasRef.current && canvasRef.current.getContext('2d').clearRect(0, 0, videoWidth, videoHeight);
+//         canvasRef && canvasRef.current && faceapi.draw.drawDetections(canvasRef.current, resizedDetections);
+//         canvasRef && canvasRef.current && faceapi.draw.drawFaceLandmarks(canvasRef.current, resizedDetections);
+//         canvasRef && canvasRef.current && faceapi.draw.drawFaceExpressions(canvasRef.current, resizedDetections);
+//       }
+//     }, 100)
+//   }
+
+//   const closeWebcam = () => {
+//     videoRef.current.pause();
+//     videoRef.current.srcObject.getTracks()[0].stop();
+//     setCaptureVideo(false);
+//   }
+
+//   return (
+//     <div>
+//       <div style={{ textAlign: 'center', padding: '10px' }}>
+//         {
+//           captureVideo && modelsLoaded ?
+//             <button onClick={closeWebcam} style={{ cursor: 'pointer', backgroundColor: 'green', color: 'white', padding: '15px', fontSize: '10px', border: 'none', borderRadius: '10px' }}>
+//               Close Webcam
+//             </button>
+//             :
+//             <button onClick={startVideo} style={{ cursor: 'pointer', backgroundColor: 'green', color: 'white', padding: '15px', fontSize: '10px', border: 'none', borderRadius: '10px' }}>
+//               Open Webcam
+//             </button>
+//         }
+//       </div>
+//       {
+//         captureVideo ?
+//           modelsLoaded ?
+//             <div>
+//               <div style={{ display: 'flex', justifyContent: 'center', padding: '10px' }}>
+//                 <video ref={videoRef} height={videoHeight} width={videoWidth} onPlay={handleVideoOnPlay} style={{ borderRadius: '10px' }} />
+//                 <canvas ref={canvasRef} style={{ position: 'absolute' }} />
+//               </div>
+//             </div>
+//             :
+//             <div>loading...</div>
+//           :
+//           <>
+//           </>
+//       }
+//     </div>
+//   );
+// }
+
+// export default TestQ;
 // import { Helmet } from 'react-helmet';
 // import React, { useEffect,useState } from 'react';
 // // const socket = io.connect('http://127.0.0.1:5001');

@@ -31,4 +31,7 @@ server/.env
 server/.env.local
 server/.env.*.local
 
+flask/Transformer_FAU_fold0.h5
+flask/Transformer_FAU_fold1.h5
+
 
