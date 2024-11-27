@@ -201,11 +201,19 @@ app.post("/receive-image", async (req, res) => {
   if(usedb){
     
     try {
-        const flaskResponse = await axios.post("http://localhost:8000/process", req.body, {
-          headers: { "Content-Type": "application/json" }
-        });
+      //   const flaskResponse = await axios.post("http://localhost:8000/process", req.body, {
+      //     headers: { "Content-Type": "application/json" }
+      //   });
   
-       const fau=flaskResponse.data;
+      //  const fau=flaskResponse.data;
+      nd=getRandomSubset(arr, 5, 11);
+      mapping_BP4D = {0:'Inner Brow Raiser',1:'Outer Brow Raiser',2:'Brow Lowerer',
+        3:'Cheek raiser',4:'Lid Tightener',
+        5:'Upper Lip Raiser',6:'Lip Corner Puller',
+        7:'Dimpler',8:'Lip Corner Depressor',9:'Chin Raiser',
+        10:'Lip Tightener',11:'Lip pressor'}
+
+      fau=nd.map((x)=>mapping_BP4D[x]);
       logfau({ fau, id ,timestamp: new Date().toISOString()});
       }catch (error) {
       console.error("Error forwarding to Flask:", error.message);
