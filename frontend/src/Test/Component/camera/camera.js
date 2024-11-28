@@ -105,12 +105,12 @@ function Cam({id}) {
       // Run expression analysis every 100ms
       const expressionInterval = setInterval(() => {
         analyzeExpressions();
-      }, 40);
+      }, 100);
 
       // Send frames to the server every 3 seconds
       const serverInterval = setInterval(() => {
         sendFramesToServer();
-      }, 1000);
+      }, 100);
 
       return () => {
         clearInterval(expressionInterval);
