@@ -39,7 +39,7 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 
 
-const usedb=false;
+const usedb=process.env.USEDB;
 
 // Mock database (in-memory)
 const users = [];
