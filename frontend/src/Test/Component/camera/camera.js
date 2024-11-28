@@ -2,14 +2,15 @@ import * as faceapi from 'face-api.js';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-function Cam(id) {
+function Cam({id}) {
   const [modelsLoaded, setModelsLoaded] = useState(false);
+  const num=useRef(0);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   // const id = idj.id;
   const videoHeight = 480;
   const videoWidth = 640;
-
+  
   useEffect(() => {
     // Load FaceAPI models
     const loadModels = async () => {
@@ -60,7 +61,7 @@ function Cam(id) {
         }, ["", -Infinity]);
         
         //console.log(`Max emotion: ${maxEmotion[0]} (${maxEmotion[1]})`;
-        const id=id.id;
+        
         emotionLogs.push({maxEmotion,id,timestamp:new Date().toISOString() });
         console.log(id);
         if (emotionLogs.length >= 100) { // Assuming 10 emotions/sec
@@ -90,8 +91,10 @@ function Cam(id) {
       
       //console.log(image);
       // Send the frame to Flask server
+      num.current+=1;
+      const tm=num.current;
       axios
-        .post("http://localhost:5000/receive-image", { frame: img ,id:id.id })
+        .post("http://localhost:5000/receive-image", { frame: image ,id:id,num:tm})
         .then((res) => console.log("Frame sent successfully"))
         .catch((error) => console.error("Error sending frame to server: ", error));
     }

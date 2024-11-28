@@ -184,15 +184,15 @@ function getRandomSubset(arr, min, max) {
 
 const session = require("express-session");
 const { time } = require('console');
-app.use(session({
-  secret: "xy1",    // Used to sign the session ID cookie
-  resave: false,                // Prevents resaving session if nothing changes
-  saveUninitialized: true,      // Forces a session to be saved even if unmodified
-  cookie: { secure: false }     // Set to true if using HTTPS
-}));
+// app.use(session({
+//   secret: "xy1",    // Used to sign the session ID cookie
+//   resave: false,                // Prevents resaving session if nothing changes
+//   saveUninitialized: true,      // Forces a session to be saved even if unmodified
+//   cookie: { secure: false }     // Set to true if using HTTPS
+// }));
 
 app.post("/receive-image", async (req, res) => {
-  const { frame,id } = req.body;
+  const { frame,id,num } = req.body;
   
 
   // if (!frame) {
@@ -201,20 +201,20 @@ app.post("/receive-image", async (req, res) => {
   if(usedb){
     
     try {
-      //   const flaskResponse = await axios.post("http://localhost:8000/process", req.body, {
-      //     headers: { "Content-Type": "application/json" }
-      //   });
+        // const flaskResponse = await axios.post("http://localhost:8000/process", req.body, {
+        //   headers: { "Content-Type": "application/json" }
+        // });
   
-      //  const fau=flaskResponse.data;
-      nd=getRandomSubset(arr, 5, 11);
-      mapping_BP4D = {0:'Inner Brow Raiser',1:'Outer Brow Raiser',2:'Brow Lowerer',
-        3:'Cheek raiser',4:'Lid Tightener',
-        5:'Upper Lip Raiser',6:'Lip Corner Puller',
-        7:'Dimpler',8:'Lip Corner Depressor',9:'Chin Raiser',
-        10:'Lip Tightener',11:'Lip pressor'}
+      // //  const fau=flaskResponse.data;
+      // nd=getRandomSubset(arr, 5, 11);
+      // mapping_BP4D = {0:'Inner Brow Raiser',1:'Outer Brow Raiser',2:'Brow Lowerer',
+      //   3:'Cheek raiser',4:'Lid Tightener',
+      //   5:'Upper Lip Raiser',6:'Lip Corner Puller',
+      //   7:'Dimpler',8:'Lip Corner Depressor',9:'Chin Raiser',
+      //   10:'Lip Tightener',11:'Lip pressor'}
 
-      fau=nd.map((x)=>mapping_BP4D[x]);
-      logfau({ fau, id ,timestamp: new Date().toISOString()});
+      // fau=nd.map((x)=>mapping_BP4D[x]);
+      logfau({ num, id ,timestamp: new Date().toISOString()});
       }catch (error) {
       console.error("Error forwarding to Flask:", error.message);
       return res.status(500).send("Error forwarding to Flask");

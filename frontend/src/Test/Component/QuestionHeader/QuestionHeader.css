@@ -17,7 +17,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f0f0f0;
+    background-color: #4caf50;
     border: 1px solid #ccc;
     border-radius: 50%;
     cursor: pointer;
@@ -26,6 +26,29 @@
   .question-number.active {
     background-color: #4caf50;
     color: white;
+    border: 3px solid darkgreen;
+  }
+
+  .question-number.reviewed.active {
+    background-color: #007bff;
+    color: white;
+    border: 3px solid darkblue;
+  }
+
+  .question-number.reviewed {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .question-number.submited{
+    background-color: #ff4f5a;
+    color: white;
+  }
+  .question-number.submited.active{
+    background-color: #ff4f5a;
+    color: white;
+    border: 3px solid darkred;
+
   }
   
   button {

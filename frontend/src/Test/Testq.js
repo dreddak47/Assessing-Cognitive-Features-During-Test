@@ -21,6 +21,8 @@ const Test = () => {
   const [disbs, setdisbs] = useState([]);
   const [firsttime, setfirsttime] = useState([]);
   const [sfirsttime, setsfirsttime] = useState([]);
+  const [reviewed, setreviewed] = useState([]);
+  const nsubmitted=useRef(0);
   const navigate = useNavigate();
 
   const location = useLocation();
@@ -30,7 +32,11 @@ const Test = () => {
   const [showPopup, setShowPopup] = useState(false);
 
   const handleEndTest = () => {
-    setShowPopup(true); // Show the popup
+    if(nsubmitted.current===questions.length){
+      setShowPopup(true); // Show the popup
+    }else{
+      alert('You have not submitted all answers. Please submit all answers before ending the test');
+    }
   };
 
   const closePopup = () => {
@@ -44,57 +50,6 @@ const Test = () => {
     // Navigate or perform any final actions here
   };
   
-  // useEffect(() => {
-  //   const webgazer=window.webgazer;
-  //   webgazer.setGazeListener((data, elapsedTime)=>{
-  //     //console.log(data,elapsedTime);
-  //     // axios
-  //     // .post("http://localhost:5000/receive-gazer", { data,elapsedTime })
-  //     // .catch((error) => console.error("Error sending frame to Node.js: ", error));
-  //   }).begin();
-  // }, []);
-
-  // const videoRef = useRef(null);
-  // const canvasRef = useRef(null);
-
-  // useEffect(() => {
-  //   // Access the webcam
-  //   navigator.mediaDevices
-  //     .getUserMedia({ video: true })
-  //     .then((stream) => {
-  //       if (videoRef.current) {
-  //         videoRef.current.srcObject = stream;
-  //       }
-  //     })
-  //     .catch((err) => console.error("Error accessing webcam: ", err));
-
-  //   // Start sending frames every 1 second
-  //   const intervalId = setInterval(() => {
-  //     if (canvasRef.current && videoRef.current) {
-  //       const canvas = canvasRef.current;
-  //       const video = videoRef.current;
-
-  //       // Draw the current video frame to the canvas
-  //       const ctx = canvas.getContext("2d");
-  //       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  //       // Convert canvas to Base64 image
-  //       const image = canvas.toDataURL("image/jpeg");
-
-  //       // Send the frame to Flask server
-  //       axios
-  //         .post("http://localhost:5000/receive-image", { frame: image })
-  //         .catch((error) => console.error("Error sending frame to Node.js: ", error));
-  //     }
-  //   }, 3000);
-
-  //   return () => clearInterval(intervalId);
-  // }, []);
-  // <div>
-  //         <video ref={videoRef} autoPlay muted width="640" height="480" style={{ display: "none" }} />
-  //         <canvas ref={canvasRef} width="640" height="480" style={{ display: "none" }} />
-  //       </div>
-
   
 
 
@@ -109,6 +64,7 @@ const Test = () => {
           setfirsttime(response.data.map(() => -1));
           setsfirsttime(response.data.map(() => -1));
           setAnswerstmp(response.data.map(() => -1));
+          setreviewed(response.data.map(() => 0));
           logEvent({
             UserID: id,
             EventType : 'START',
@@ -244,18 +200,18 @@ const Test = () => {
     setCurrentQuestion(index);
   };
 
-  const handleNext = () => {
+  const handleReview = () => {
+    setreviewed([...reviewed.slice(0,currentQuestion),1,...reviewed.slice(currentQuestion+1)]);
     logEvent({
       UserID: id,
-      EventType : 'NEXT',
-      TimeElapsed: questions.length*TimeperQuestion-TotalTime
+      EventType : 'REVIEWED',
+      TimeElapsed: questions.length*TimeperQuestion-TotalTime,
+      Qn : currentQuestion,
     });
-
-    handleQuestionClick(currentQuestion+1)
-  
   };
 
   const handlesubmit = () => {
+    nsubmitted.current+=1;
     const newAnswers = [...answers];
     const newdisbs = [...disbs];
     const newsfirsttime = [...sfirsttime];
@@ -266,7 +222,7 @@ const Test = () => {
     setAnswers(newAnswers);
     setdisbs(newdisbs);
     console.log(newAnswers);
-
+    setreviewed([...reviewed.slice(0,currentQuestion),2,...reviewed.slice(currentQuestion+1)]);
     logEvent({
       UserID: id,
       EventType : 'QSubmit',
@@ -277,7 +233,7 @@ const Test = () => {
       ResponseTime : newsfirsttime[currentQuestion]
     });
     //logEvent(`Submitted Question: ${currentQuestion} -> ${selectedOption} | timeTaken : ${TimeperQuestion-timeLeft[currentQuestion]} seconds | FirsttimeSeen : ${firsttime[currentQuestion]} seconds | Timefromfirstseen : ${newsfirsttime[currentQuestion]} seconds`);
-    handleNext(); 
+    handleQuestionClick(currentQuestion+1) 
   };
   
   const handlePrev = () => {
@@ -289,7 +245,18 @@ const Test = () => {
     handleQuestionClick(currentQuestion-1)
   };
   
+  const reminder = () => { 
+    if(reviewed[currentQuestion]===0 && disbs[currentQuestion]===0){
+      return <h5 className='points'>Click Submit to Submit answers</h5>
+    }else if(reviewed[currentQuestion]===1){
+      return <h5 className='points'>Question Marked for Review. Click Submit to Submit answers</h5>
+    }else if(reviewed[currentQuestion]===2){
+      return <h5 className='points'>Question Submitted. You cannot change your answers</h5>
+    }else{
+      return <h5 ></h5>
+    }
 
+  };
   
   const end = (e) => {
     
@@ -320,7 +287,11 @@ const Test = () => {
         </p>
         <br></br>
         <a className="endtest"  onClick={handleEndTest}><b>End Test</b></a>
-     
+        <div className='navbar_endtest'>
+          
+          <h5 className='points'><b>Use your Non-dominant hand.</b></h5>
+        </div>
+        
       </nav>
       
     </div>
@@ -337,6 +308,7 @@ const Test = () => {
         totalQuestions={questions.length} 
         currentQuestion={currentQuestion} 
         handleQuestion={handleQuestionClick} 
+        reviewed={reviewed}
       />
       
       <h2 className="question" dangerouslySetInnerHTML={{
@@ -354,11 +326,13 @@ const Test = () => {
         ))}
       </div>
       <div className="button-container">
-        <button onClick={handlePrev} disabled={currentQuestion===0}>Previous</button>
+        {/* <button onClick={handlePrev} disabled={currentQuestion===0}>Previous</button> */}
         <button onClick={handlesubmit} disabled={disbs[currentQuestion]!==0} className={`submit_${disbs[currentQuestion]===2 ? "ns":"s"}`}>Submit</button>
-        <button onClick={handleNext} disabled={currentQuestion===questions.length-1}>Next</button>
+        <button onClick={handleReview}>Mark for Review</button>
       </div>
-      {/* <div className="timer">Time left: {timeLeft[currentQuestion]>0?timeLeft[currentQuestion]:0} seconds</div> */}
+      <div className="timer">
+         {reminder()}
+      </div>
     </div>
 
     </div>

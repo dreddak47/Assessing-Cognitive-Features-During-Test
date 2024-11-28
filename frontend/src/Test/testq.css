@@ -269,9 +269,17 @@
   .name_nav:hover{
     background-color: lightgray;
   }
+
+  .navbar_endtest{
+    display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  justify-content: center; /* Center vertically */
+  align-items: center; /* Center horizontally */
+  text-align: center; /* Center text if needed */
+  }
   .endtest{
     margin-top: 20px;
-    margin-left: 35px;
+    margin-left: 50px;
     padding: 10px 20px;
     border: 1px solid #ff4f5a;
     border-color: #ff4f5a;
@@ -281,6 +289,10 @@
     font-size: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
+  }
+
+  .points{
+    color:rgb(209, 60, 60);
   }
 
   .endtest:hover{

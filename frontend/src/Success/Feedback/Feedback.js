@@ -147,7 +147,9 @@ const Feedback=({answers,seenFirst,submittedAfterSeen,answerstatus,id}) => {
 
   return (
     <div className="test-container">
-      <h2 className="question">{questions[currentQuestion]?.question}</h2>
+      <h2 className="question" dangerouslySetInnerHTML={{
+        __html: questions[currentQuestion]?.question,
+      }}/>
       <div className="nt-options">
         {questions[currentQuestion]?.options.map((option, index) => (
           <div
