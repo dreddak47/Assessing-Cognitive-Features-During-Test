@@ -62,11 +62,11 @@ function Cam({id}) {
         
         //console.log(`Max emotion: ${maxEmotion[0]} (${maxEmotion[1]})`;
         
-        emotionLogs.push({maxEmotion,id,timestamp:new Date().toISOString() });
-        console.log(id);
+        // emotionLogs.push({maxEmotion,id,timestamp:new Date().toISOString() });
+        // console.log(id);
         if (emotionLogs.length >= 100) { // Assuming 10 emotions/sec
             axios
-          .post("http://localhost:5000/receive-expression", emotionLogs)
+          .post("http://localhost:5000/receive-expression", {maxEmotion,id,timestamp:new Date().toISOString() })
           .then((res) => console.log("Expression sent successfully"))
           .catch((error) => console.error("Error sending expression to server: ", error));
           emotionLogs.length = 0; // Clear the logs after sending
