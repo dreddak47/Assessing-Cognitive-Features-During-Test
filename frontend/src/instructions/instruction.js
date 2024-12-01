@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import './instruction.css'; // Import the CSS file
+import axios from 'axios';
 
 const InstructionsPage = () => {
   const [isChecked, setIsChecked] = useState(false);
-
+  const [isServerAvailable, setIsServerAvailable] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   const navigate = useNavigate();
 
@@ -13,10 +16,16 @@ const InstructionsPage = () => {
   const name = location.state?.info;
   const id = location.state?.id;
 
-  const onStartQuiz = () => {
-    navigate('/test',{ state: { info: name, id : id} });
+  const onStartQuiz = async () => {
+    // Check server availability before proceeding
+    const serverIsAvailable = await checkServerStatus();
+    if (serverIsAvailable) {
+      setError(false);
+      navigate('/test', { state: { info: name, id: id } });
+    } else {
+      setError(true);
+    }
   };
-
   const handleCheckboxChange = () => {
     setIsChecked(!isChecked);
   };
@@ -28,6 +37,26 @@ const InstructionsPage = () => {
     numSections:3
   };
   
+
+    // Function to check server status
+    const checkServerStatus = async () => {
+      try {
+        setError(false);
+        setLoading(true);
+        const response = await axios.get(`${process.env.REACT_APP_FLASK_URL}/status`);
+        setLoading(false);
+        if (response.status === 200) {
+          setIsServerAvailable(true); // Server is available
+          return true;
+        }
+      } catch (error) {
+        setLoading(false);
+        console.error("Server is not available:", error);
+        
+        setIsServerAvailable(false); // Server is not available
+      }
+      return false;
+    };
   
   
   
@@ -95,7 +124,14 @@ const InstructionsPage = () => {
         >
           Start Quiz
         </button>
+        <div classname="inline spinner">           
+          {loading && 
+            <div className="spinner "></div>} 
+        </div>
+        
+        {error && <div className="error">X</div>}
       </div>
+      
     </div>
   );
 };

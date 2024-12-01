@@ -96,3 +96,34 @@
     color:#007bff
   }
   
+  .inline-spinner {
+    display: inline-block; /* Ensures it stays inline with text */
+    margin-left: 10px; /*Adds spacing between the text and the spinner */ 
+    vertical-align: middle; /* Aligns it with the middle of the text */
+  }
+  
+  .spinner {
+    display: inline-block;
+    vertical-align: middle;
+    width:24px;
+    height: 24px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .error{
+    color: red;
+    font-size: 30px;
+    margin-top: 10px;
+  }

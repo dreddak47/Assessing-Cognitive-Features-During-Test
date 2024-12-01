@@ -26,7 +26,7 @@
         "Whether the user is providing input to the system explicitly."
       ], 
       "answer": 1 },
-    { "id": 4, 
+      { "id": 4, 
       "question": "High Fidelity diagrams are ______________________ representations of a system.", 
       "options":
         ["Detailed and interactive.",
@@ -142,7 +142,7 @@
       },
       {
         "id": 15, 
-        "question": "What is the output of the following code:<br> <code>x=[1,2,3]<br></code>",
+        "question": "How will you add 4 to x in the  following code: <br> <code>x=[1,2,3]<br></code>",
         "options": [
           "x.add(4)",
           "x.append(4)",
@@ -300,5 +300,6 @@
         ],
         "answer": 1
       }
+
     
   ]

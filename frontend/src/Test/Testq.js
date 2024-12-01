@@ -3,7 +3,6 @@ import axios from 'axios';
 import Cam from './Component/camera/camera';
 import QuestionHeader from './Component/QuestionHeader/QuestionHeader'; 
 import './testq.css'; // Import the CSS file
-//import Sidebar from './Component/sidebar/Sidebar';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
@@ -102,37 +101,6 @@ const Test = () => {
     answersRef.current = answers; // Keep the ref updated with the latest answers
   }, [answers]);
   
- 
-  // useEffect(() => {
-  //     if(questions.length >0){
-      
-  //     const newTimerId = setInterval(() => {
-  //     setTimeLeft(prevTimeLeft => {
-  //       const newTimeLeft = [...prevTimeLeft];
-      
-  //       if (newTimeLeft[currentQuestion] >= 0 && disbs[currentQuestion]===0) {
-  //         newTimeLeft[currentQuestion] -=1;
-  //         if (newTimeLeft[currentQuestion] === 0) {
-  //           logEvent({
-  //             UserID: id,
-  //             EventType : 'QTimeout',
-  //             Time: questions.length*TimeperQuestion-TotalTime ,
-  //             Qn : currentQuestion
-  //           });
-  //           handleNext();
-  //           newTimeLeft[currentQuestion] -=1;
-  //         }
-  //       }
-  //       return newTimeLeft;
-  //     });
-      
-  //   }, 1000);
-  //   setTimerId(newTimerId);
-  //   // Clean up timer when component unmounts
-  // }
-  //   return () => clearInterval(timerId);
-  // }, [currentQuestion]);
-
 
   //LOGGING FUNCTION
   const logEvent = async (logData) => {
@@ -148,22 +116,15 @@ const Test = () => {
     }
   };
 
-  // const handleOptionChange = (e) => {
-  //   const selectedValue = parseInt(e.target.value, 10);
-  //   setSelectedOption(selectedValue);
-  //   const newAnswerstmp = [...answerstmp];
-  //   newAnswerstmp[currentQuestion] = selectedValue;
-  //   setAnswerstmp(newAnswerstmp);
-  // };
-
   const handleOptionSelect = (index) => {
+    if(disbs[currentQuestion]!==1){ 
     setSelectedOption(index);
     const newdisbs = [...disbs];
     newdisbs[currentQuestion] = 0;
     setdisbs(newdisbs);
     const newAnswerstmp = [...answerstmp];
     newAnswerstmp[currentQuestion] = index;
-    setAnswerstmp(newAnswerstmp);
+    setAnswerstmp(newAnswerstmp);}
   };
 
   const handleQuestionClick = (index) => {
@@ -182,7 +143,6 @@ const Test = () => {
       submitted: disbs[currentQuestion]===1?"Yes":"No"
     });
 
-    //logEvent(`Question: ${currentQuestion} to ${index} | submitted: ${disbs[currentQuestion]===1?"Yes":"No"} | TimeLeft: ${TimeperQuestion-timeLeft[currentQuestion]} seconds`);
     if(firsttime[index]===-1){
       const newfirsttime = [...firsttime];
       newfirsttime[index] = TimeperQuestion*questions.length - TotalTime; 
@@ -193,7 +153,6 @@ const Test = () => {
         Qn : index,
         FirsttimeSeen : newfirsttime[index]
       });
-      //logEvent(`First time seen Question: ${index} = ${newfirsttime[index]} seconds`);
       setfirsttime(newfirsttime)
     }
     setSelectedOption('');
@@ -232,7 +191,7 @@ const Test = () => {
       FirsttimeSeen : firsttime[currentQuestion] ,
       ResponseTime : newsfirsttime[currentQuestion]
     });
-    //logEvent(`Submitted Question: ${currentQuestion} -> ${selectedOption} | timeTaken : ${TimeperQuestion-timeLeft[currentQuestion]} seconds | FirsttimeSeen : ${firsttime[currentQuestion]} seconds | Timefromfirstseen : ${newsfirsttime[currentQuestion]} seconds`);
+    
     handleQuestionClick(currentQuestion+1) 
   };
   
@@ -259,7 +218,6 @@ const Test = () => {
   };
   
   const end = (e) => {
-    
     logEvent({
       UserID: id,
       EventType : 'END',
@@ -300,25 +258,23 @@ const Test = () => {
       <Cam 
       id={id}
       />
-      {/* <div>
-          <video ref={videoRef} autoPlay muted width="640" height="480" style={{ display: "none" }} />
-          <canvas ref={canvasRef} width="640" height="480" style={{ display: "none" }} />
-        </div> */}
       <QuestionHeader 
         totalQuestions={questions.length} 
         currentQuestion={currentQuestion} 
         handleQuestion={handleQuestionClick} 
         reviewed={reviewed}
       />
-      
-      <h2 className="question" dangerouslySetInnerHTML={{
-        __html: questions[currentQuestion].question,
-      }}/>
+      <h2
+        className="question"
+        dangerouslySetInnerHTML={{
+          __html: `Q${currentQuestion + 1} ${questions[currentQuestion].question}`,
+        }}
+      />
       <div className="options">
         {questions[currentQuestion].options.map((option, index) => (
           <div
             key={index}
-            className={`option-box ${selectedOption === index || answerstmp[currentQuestion] === index ? "selected" : ""}`}
+            className={`option-box ${(selectedOption === index || answerstmp[currentQuestion] === index)? "selected" : ""}`}
             onClick={() => handleOptionSelect(index)}
           >
             <p className="option-text">{option}</p>
@@ -326,9 +282,8 @@ const Test = () => {
         ))}
       </div>
       <div className="button-container">
-        {/* <button onClick={handlePrev} disabled={currentQuestion===0}>Previous</button> */}
         <button onClick={handlesubmit} disabled={disbs[currentQuestion]!==0} className={`submit_${disbs[currentQuestion]===2 ? "ns":"s"}`}>Submit</button>
-        <button onClick={handleReview}>Mark for Review</button>
+        <button onClick={handleReview} disabled={disbs[currentQuestion]===1 || reviewed[currentQuestion]===1} >Mark for Review</button>
       </div>
       <div className="timer">
          {reminder()}

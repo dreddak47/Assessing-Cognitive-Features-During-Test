@@ -33,5 +33,7 @@ server/.env.*.local
 
 flask/Transformer_FAU_fold0.h5
 flask/Transformer_FAU_fold1.h5
+flask/logs.py
+server/try.js
 
 

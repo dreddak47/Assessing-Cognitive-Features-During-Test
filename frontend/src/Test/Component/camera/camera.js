@@ -8,8 +8,8 @@ function Cam({id}) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   // const id = idj.id;
-  const videoHeight = 480;
-  const videoWidth = 640;
+  const videoHeight = 224;
+  const videoWidth = 224;
   
   useEffect(() => {
     // Load FaceAPI models
@@ -45,9 +45,9 @@ function Cam({id}) {
     }
   }, [modelsLoaded]);
   const emotionLogs = [];
-  const img=0;
+
   // Model 1: Analyze expressions locally
-  const analyzeExpressions = useCallback(async () => {
+  const analyzeExpressions = async () => {
     if (videoRef.current && modelsLoaded) {
       const detections = await faceapi
         .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
@@ -62,22 +62,26 @@ function Cam({id}) {
         
         //console.log(`Max emotion: ${maxEmotion[0]} (${maxEmotion[1]})`;
         
-        // emotionLogs.push({maxEmotion,id,timestamp:new Date().toISOString() });
+        emotionLogs.push({data:maxEmotion,id,timestamp:new Date().toISOString() });
         // console.log(id);
-        if (emotionLogs.length >= 100) { // Assuming 10 emotions/sec
-            axios
-          .post("http://localhost:5000/receive-expression", {maxEmotion,id,timestamp:new Date().toISOString() })
+        if (emotionLogs.length >= 1000) { // Assuming 10 emotions/sec
+          axios
+          .post(`${process.env.REACT_APP_FLASK_URL}/log`,{'data':emotionLogs,'service':"EXP"}, {
+            headers: { "Content-Type": "application/json" }
+          })
           .then((res) => console.log("Expression sent successfully"))
           .catch((error) => console.error("Error sending expression to server: ", error));
+          console.log(emotionLogs.length)
           emotionLogs.length = 0; // Clear the logs after sending
         }
         
       }
     }
-  }, [modelsLoaded]);
+  };
 
+  const imageLogs = [];
   // Model 2: Send frames to server
-  const sendFramesToServer = useCallback(() => {
+  const sendFramesToServer = () => {
     if (canvasRef.current && videoRef.current) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
@@ -91,33 +95,39 @@ function Cam({id}) {
       
       //console.log(image);
       // Send the frame to Flask server
-      num.current+=1;
-      const tm=num.current;
+      imageLogs.push({ data: image ,id:id,timestamp:new Date().toISOString()});
+      if (imageLogs.length >= 100) {
       axios
-        .post("http://localhost:5000/receive-image", { frame: image ,id:id,num:tm})
+        .post(`${process.env.REACT_APP_FLASK_URL}/log`,{'data':imageLogs,'service':"FAU"}, {
+          headers: { "Content-Type": "application/json" }
+        })
         .then((res) => console.log("Frame sent successfully"))
         .catch((error) => console.error("Error sending frame to server: ", error));
+        imageLogs.length = 0; // Clear the logs after sending
+      }
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (modelsLoaded) {
       // Run expression analysis every 100ms
       const expressionInterval = setInterval(() => {
         analyzeExpressions();
-      }, 100);
+      }, 25);
 
       // Send frames to the server every 3 seconds
       const serverInterval = setInterval(() => {
         sendFramesToServer();
-      }, 100);
+      }, 25);
 
       return () => {
         clearInterval(expressionInterval);
         clearInterval(serverInterval);
       };
     }
-  }, [modelsLoaded, analyzeExpressions, sendFramesToServer]);
+  // }, [modelsLoaded, analyzeExpressions, sendFramesToServer]);
+// }, [modelsLoaded, analyzeExpressios]);
+}, [modelsLoaded]);
 
   return (
     <div>
@@ -165,7 +175,7 @@ export default Cam;
 //       const MODEL_URL = process.env.PUBLIC_URL + '/models';
 
 //       Promise.all([
-//         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+//         faceapi.netss.tinyFaceDetector.loadFromUri(MODEL_URL),
 //         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
 //         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
 //         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),

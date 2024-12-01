@@ -37,6 +37,7 @@ const Feedback=({answers,seenFirst,submittedAfterSeen,answerstatus,id}) => {
   useEffect(() => {
     if (completed) {
       // Log the feedback data if the form has been completed
+      
       logFeedback({
         UserID: id,
         EventType: 'Feedback',
@@ -87,6 +88,7 @@ const Feedback=({answers,seenFirst,submittedAfterSeen,answerstatus,id}) => {
         if(index===(questions.length)){
             console.log("End of Questions");
             setFlag('all submitted');
+            setCompleted(true);
         }else{
           findNextSubmittedQuestion(index);
         }
@@ -102,7 +104,6 @@ const Feedback=({answers,seenFirst,submittedAfterSeen,answerstatus,id}) => {
         }
         setFlag('all submitted');
         setCompleted(true);
-        
     };
 
     
@@ -148,7 +149,7 @@ const Feedback=({answers,seenFirst,submittedAfterSeen,answerstatus,id}) => {
   return (
     <div className="test-container">
       <h2 className="question" dangerouslySetInnerHTML={{
-        __html: questions[currentQuestion]?.question,
+        __html: `Q${currentQuestion + 1} ${questions[currentQuestion]?.question}`,
       }}/>
       <div className="nt-options">
         {questions[currentQuestion]?.options.map((option, index) => (

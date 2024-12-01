@@ -20,6 +20,7 @@ const { createLogger, format, transports } = require('winston');
 
 // module.exports = logger;
 
+
 require('dotenv').config();
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -36,10 +37,9 @@ const db = getFirestore();
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.json({ limit: "200mb" }));
 
-
-const usedb=process.env.USEDB;
+const usedb=process.env.USEDB === 'true';
 
 // Mock database (in-memory)
 const users = [];
@@ -167,142 +167,95 @@ app.post('/log', async (req, res) => {
   }
 });
 
-let notr = 0;
-let arr = [0,1,2,3,4,5,6,7,8,9,10,11];
-const imageLog=[];
-const randomSize = Math.floor(Math.random() * (11)) + 5;
-function getRandomSubset(arr, min, max) {
-  // Shuffle the array using Fisher-Yates Shuffle
-  for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  // Determine a random size between min and max
-  const randomSize = Math.floor(Math.random() * (max - min + 1)) + min;
-  return arr.slice(0, randomSize);
-}
 
-const session = require("express-session");
-const { time } = require('console');
-// app.use(session({
-//   secret: "xy1",    // Used to sign the session ID cookie
-//   resave: false,                // Prevents resaving session if nothing changes
-//   saveUninitialized: true,      // Forces a session to be saved even if unmodified
-//   cookie: { secure: false }     // Set to true if using HTTPS
-// }));
-
-app.post("/receive-image", async (req, res) => {
-  const { frame,id,num } = req.body;
+// app.post("/receive-image", async (req, res) => {
+//   if(!usedb){
+//     try {
+//         axios.
+//         post(`${process.env.FLASK_ADDRESS}/log`, {...req.body,service:"FAU"}, {
+//           headers: { "Content-Type": "application/json" }
+//         });
+//       }catch (error) {
+//       console.error("Error forwarding to Flask:", error.message);
+//       return res.status(500).send("Error forwarding to Flask");
+//     }
   
-
-  // if (!frame) {
-  //   return res.status(400).send("No frame received");
-  // }
-  if(usedb){
-    
-    try {
-        // const flaskResponse = await axios.post("http://localhost:8000/process", req.body, {
-        //   headers: { "Content-Type": "application/json" }
-        // });
+//     res.status(200).json({ message: "Frame processed successfully" });
+//   }else{
+//     res.status(200).json({
+//       message: "Frame processed successfully",
+//     });
+//   }
   
-      // //  const fau=flaskResponse.data;
-      // nd=getRandomSubset(arr, 5, 11);
-      // mapping_BP4D = {0:'Inner Brow Raiser',1:'Outer Brow Raiser',2:'Brow Lowerer',
-      //   3:'Cheek raiser',4:'Lid Tightener',
-      //   5:'Upper Lip Raiser',6:'Lip Corner Puller',
-      //   7:'Dimpler',8:'Lip Corner Depressor',9:'Chin Raiser',
-      //   10:'Lip Tightener',11:'Lip pressor'}
+// });
 
-      // fau=nd.map((x)=>mapping_BP4D[x]);
-      logfau({ num, id ,timestamp: new Date().toISOString()});
-      }catch (error) {
-      console.error("Error forwarding to Flask:", error.message);
-      return res.status(500).send("Error forwarding to Flask");
-    }
+// app.post("/receive-expression", async (req, res) => {
+//   if(!usedb){
+//     try {
+//         axios.
+//         post(`${process.env.FLASK_ADDRESS}/log`, {...req.body,service:"expression"}, {
+//           headers: { "Content-Type": "application/json" }
+//         });
+//       }catch (error) {
+//       console.error("Error forwarding to Flask:", error.message);
+//       return res.status(500).send("Error forwarding to Flask");
+//     }
   
-    res.status(200).json({ message: "Frame processed successfully" });
-  }else{
-    res.status(200).json({
-      message: "Frame processed successfully",
-    });
-  }
+//     res.status(200).json({ message: "Frame processed successfully" });
+//   }else{
+//     res.status(200).json({
+//       message: "Frame processed successfully",
+//     });
+//   }
   
-});
-
-app.post("/receive-expression", async (req, res) => {
-  const {maxEmotion,id,ts} = req.body;
-
-  // if (!expressions) {
-  //   return res.status(400).send("No frame received");
-  // }
-  if(usedb){
-    try {
-      
-      logexpression(req.body);
   
-      // Send the Flask server's response back to the React frontend
-      res.status(200).json({
-        message: "Frame processed successfully",
-        
-      });
-    } catch (error) {
-      console.error("Error forwarding to Flask:", error.message);
-      res.status(500).send("Error forwarding to Flask");
-    }
-  }else{
-    //console.log(req.body);
-    res.status(200).json({
-      message: "Frame processed successfully",
-    });
-  }
-  
-});
+// });
 
 
 
-function logfau(data){
-  const {fau,id,ts}=data;
-  // console.log(data);
-  const httpTransportOptions = {
-    host: 'http-intake.logs.us5.datadoghq.com',
-    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=FAU&ddtags=id:${id}`,
-    ssl: true
-  };
+// function logfau(data){
+//   const {fau,id,ts}=data;
+//   // console.log(data);
+//   const httpTransportOptions = {
+//     host: 'http-intake.logs.us5.datadoghq.com',
+//     path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=FAU&ddtags=id:${id}`,
+//     ssl: true
+//   };
 
-  const logger = createLogger({
-    level: 'info',
-    exitOnError: false,
-    format: format.json(),
-    transports: [
-      new transports.Http(httpTransportOptions),
-    ],
-  });
+//   const logger = createLogger({
+//     level: 'info',
+//     exitOnError: false,
+//     format: format.json(),
+//     transports: [
+//       new transports.Http(httpTransportOptions),
+//     ],
+//   });
 
-  module.exports = logger;
-  logger.info(data,{type: 'FAU' ,id:id});
-}
+//   module.exports = logger;
+//   logger.info(data,{type: 'FAU' ,id:id});
+// }
 
-function logexpression(data){
-  const {maxEmotion,id,ts}=data
-  const httpTransportOptions = {
-    host: 'http-intake.logs.us5.datadoghq.com',
-    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=expression&ddtags=id:${id}`,
-    ssl: true
-  };
+// function logexpression(data){
+//   const {maxEmotion,id,ts}=data
+//   const httpTransportOptions = {
+//     host: 'http-intake.logs.us5.datadoghq.com',
+//     path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=expression&ddtags=id:${id}`,
+//     ssl: true
+//   };
 
-  const logger = createLogger({
-    level: 'info',
-    exitOnError: false,
-    format: format.json(),
-    transports: [
-      new transports.Http(httpTransportOptions),
-    ],
-  });
+//   const logger = createLogger({
+//     level: 'info',
+//     exitOnError: false,
+//     format: format.json(),
+//     transports: [
+//       new transports.Http(httpTransportOptions),
+//     ],
+//   });
 
-  module.exports = logger;
-  logger.info(data,{type: 'EXPRESSION',id:id });
+//   module.exports = logger;
+//   logger.info(data,{type: 'EXPRESSION',id:id });
 
-}
+// }
 
 
 const PORT = process.env.PORT || 5000;
