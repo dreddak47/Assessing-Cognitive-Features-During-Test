@@ -18,7 +18,7 @@ const Feedback=({answers,seenFirst,submittedAfterSeen,answerstatus,id}) => {
     const [completed, setCompleted] = useState(false); // Track if the feedback form has been completed
 
   const handleChange = (event) => {
-    setConfidence(event.target.value); // Update confidence value dynamically
+      setConfidence(parseInt(event.target.value, 10)); // Convert the value to an integer and update confidence
   };
 
   const logFeedback = async (logData) => {
@@ -141,6 +141,7 @@ const Feedback=({answers,seenFirst,submittedAfterSeen,answerstatus,id}) => {
         <div className="test-container">
           <div style={{ textAlign: 'center' }}>
              <h2> Your responses have been noted .Thanks for your Feedback! </h2>
+             <h5>id:{id}</h5>
           </div>
         </div>
         );

@@ -24,12 +24,14 @@ const { createLogger, format, transports } = require('winston');
 require('dotenv').config();
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
+const admin = require("firebase-admin");
 
 // Initialize Firebase Admin SDK
 const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
 
 initializeApp({
   credential: cert(serviceAccount),
+  storageBucket: "gs://guessdetection.firebasestorage.app"
 });
 
 const db = getFirestore();
@@ -44,6 +46,7 @@ const usedb=process.env.USEDB === 'true';
 // Mock database (in-memory)
 const users = [];
 const questions = require('./question.json');
+const { time } = require('console');
 
 // Register route
 app.post('/register', async (req, response) => {
@@ -130,14 +133,49 @@ app.post('/getscore', async (req, res) => {
   if(usedb){
     await db.collection('users').doc(id).collection(`${id}_logs`).add({
       UserID: id,
+      EventType : 'SUBMISSION',
       score,
-      answerStatus
+      answerStatus,
+      timestamp: new Date().toISOString(),
     });
   }
   // Send both the score and answer status back to the client
   res.json({ score, answersubmitted });
 });
 
+app.post('/get_users', async (req, res) => {
+  try {
+    const usersSnapshot = await db.collection("users").get();
+    const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    res.json({ users });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+const bucket = admin.storage().bucket();
+
+app.post("/download-file", async (req, res) => {
+  try {
+      const{ name } = req.body;
+      const filePath = name+'_clicklogs.csv'; // Example: 'uploads/sample.pdf'
+      if (!filePath) {
+          return res.status(400).json({ error: "File path is required" });
+      }
+
+      // Generate a signed URL for the file (valid for 10 minutes)
+      const [url] = await bucket.file(filePath).getSignedUrl({
+          action: "read",
+          expires: Date.now() + 10 * 60 * 1000, // 10 minutes validity
+      });
+
+      res.json({ url });
+  } catch (error) {
+      console.error("Error getting file:", error);
+      res.status(500).json({ error: "Failed to retrieve file" });
+  }
+});
 
 // Express endpoint to log events
 app.post('/log', async (req, res) => {
