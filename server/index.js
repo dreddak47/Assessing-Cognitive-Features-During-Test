@@ -156,10 +156,31 @@ app.post('/get_users', async (req, res) => {
 });
 const bucket = admin.storage().bucket();
 
-app.post("/download-file", async (req, res) => {
+app.post("/download-file-click", async (req, res) => {
   try {
       const{ name } = req.body;
       const filePath = name+'_clicklogs.csv'; // Example: 'uploads/sample.pdf'
+      if (!filePath) {
+          return res.status(400).json({ error: "File path is required" });
+      }
+
+      // Generate a signed URL for the file (valid for 10 minutes)
+      const [url] = await bucket.file(filePath).getSignedUrl({
+          action: "read",
+          expires: Date.now() + 10 * 60 * 1000, // 10 minutes validity
+      });
+
+      res.json({ url });
+  } catch (error) {
+      console.error("Error getting file:", error);
+      res.status(500).json({ error: "Failed to retrieve file" });
+  }
+});
+
+app.post("/download-file-camera", async (req, res) => {
+  try {
+      const{ name } = req.body;
+      const filePath = name+'_cameralogs.csv'; // Example: 'uploads/sample.pdf'
       if (!filePath) {
           return res.status(400).json({ error: "File path is required" });
       }

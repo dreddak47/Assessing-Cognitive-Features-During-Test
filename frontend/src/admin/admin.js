@@ -34,11 +34,11 @@ const AdminPage = () => {
     }
   };
 
-  const handleDownload = async (name) => {
+  const handleDownloadclick = async (name) => {
     try {
         name=name.split(" ")[0].toLowerCase();
         const response = await axios.post(
-            `${process.env.REACT_APP_BACKEND_BASEURL}/download-file`
+            `${process.env.REACT_APP_BACKEND_BASEURL}/download-file-click`
             , { name });
         const data = response.data;
         console.log(data);
@@ -53,9 +53,25 @@ const AdminPage = () => {
     }
 };
 
-const handleViewTestDetails = (refID) => {
-  alert(`Viewing test details for Ref ID: ${refID}`);
+const handleDownloadcamera = async (name) => {
+  try {
+      name=name.split(" ")[0].toLowerCase();
+      const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_BASEURL}/download-file-camera`
+          , { name });
+      const data = response.data;
+      console.log(data);
+      if (data.url) {
+          setDownloadUrl(data.url);
+          window.open(data.url, "_blank"); // Opens the file in a new tab
+      } else {
+          alert("File not found.");
+      }
+  } catch (error) {
+      console.error("Error downloading file:", error);
+  }
 };
+
 
   if (!isLoggedIn) {
     return (
@@ -105,8 +121,8 @@ const handleViewTestDetails = (refID) => {
             <td>{user.institution}</td>
             <td>{user.name}</td>
             <td>
-              <button className="admin-download-btn" onClick={() => handleDownload(user.name)}>Download Files</button>
-              <button className="admin-view-btn" onClick={() => handleViewTestDetails(user.refID)}>View Test Details</button>
+              <button className="admin-download-btn" onClick={() => handleDownloadclick(user.name)}>Download click Logs</button>
+              <button className="admin-view-btn" onClick={() => handleDownloadcamera(user.name)}>Download Camera Logs</button>
             </td>
           </tr>
         ))}
