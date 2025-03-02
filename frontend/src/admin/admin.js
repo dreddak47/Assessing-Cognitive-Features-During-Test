@@ -105,6 +105,7 @@ const handleDownloadcamera = async (name) => {
           <th>Email</th>
           <th>Institution</th>
           <th>Name</th>
+          <th>registeredAt</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -120,6 +121,7 @@ const handleDownloadcamera = async (name) => {
             <td>{user.email}</td>
             <td>{user.institution}</td>
             <td>{user.name}</td>
+            <td>{user.registeredAt}</td>
             <td>
               <button className="admin-download-btn" onClick={() => handleDownloadclick(user.name)}>Download click Logs</button>
               <button className="admin-view-btn" onClick={() => handleDownloadcamera(user.name)}>Download Camera Logs</button>

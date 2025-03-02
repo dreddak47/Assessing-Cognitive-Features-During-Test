@@ -7,8 +7,6 @@ const path = require('path');
 
 const { createLogger, format, transports } = require('winston');
 
-
-
 // const logger = createLogger({
 //   level: 'info',
 //   exitOnError: false,
@@ -19,7 +17,6 @@ const { createLogger, format, transports } = require('winston');
 // });
 
 // module.exports = logger;
-
 
 require('dotenv').config();
 const { initializeApp, cert } = require('firebase-admin/app');
@@ -52,44 +49,28 @@ const { time } = require('console');
 app.post('/register', async (req, response) => {
   const { name, email, institution, mobile, ...edata } = req.body;
   try{
-  if(usedb){
-    let querySnapshot1={};
-    if(institution === 'IIITD'){
-      querySnapshot1 = await db.collection('creation')
-        .where('RollNo', '==', edata['rollNo'])
-        .get();
-    }else{
-      querySnapshot1 = await db.collection('creation')
-        .where('RefID', '==', edata['refID'])
-        .get();
-    }
-
-    if (querySnapshot1.empty) {
-      response.status(400).json({ message: "ERROR", error : "Given RefID/RollNo is not valid . Contact Administrator" });
+    const registeredAt = admin.firestore.Timestamp.now();
+    if(usedb){
+        await db.collection('users').add({
+          name,
+          email,
+          institution,
+          registeredAt,
+          edata // Spread the entire body into the Firestore document
+        });
+        const querySnapshot2 = await db.collection('users')
+          .where('name', '==', name)
+          .get();
       
-    }else{
-      await db.collection('users').add({
-        name,
-        email,
-        institution,
-        edata // Spread the entire body into the Firestore document
+      const docIds = [];
+      querySnapshot2.forEach(doc => {
+        docIds.push(doc.id);
       });
-      const querySnapshot2 = await db.collection('users')
-        .where('name', '==', name)
-        .get();
-    
-    const docIds = [];
-    querySnapshot2.forEach(doc => {
-      docIds.push(doc.id);
-    });
-    const id = docIds[0];
-    response.status(201).json({ message: "Registered successfully", user: { name, email, institution, mobile, ...edata} ,id: id});
+      const id = docIds[0];
+      response.status(201).json({ message: "Registered successfully", user: { name, email, institution, mobile,registeredAt, ...edata} ,id: id});
+    }else{
+      response.status(201).json({ message: "Registered successfully", user: { name, email, institution, mobile,registeredAt, ...edata} ,id: 1});
     }
-  }else{
-    response.status(201).json({ message: "Registered successfully", user: { name, email, institution, mobile, ...edata} ,id: 1});
-  }
-  
-
   
 }catch (error) {
   console.error('Error during registration:', err);
@@ -146,7 +127,9 @@ app.post('/getscore', async (req, res) => {
 app.post('/get_users', async (req, res) => {
   try {
     const usersSnapshot = await db.collection("users").get();
-    const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const users = usersSnapshot.docs.map(doc => ({ id: doc.id, 
+      ...doc.data() 
+    }));
 
     res.json({ users });
   } catch (error) {
