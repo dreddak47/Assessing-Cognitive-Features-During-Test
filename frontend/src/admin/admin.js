@@ -16,7 +16,7 @@ const AdminPage = () => {
   }, [isLoggedIn]);
 
   const handleLogin = () => {
-    if (username === "admin" && pin === "1234") {
+    if (username === "admin" && pin === "anumanData2025") {
       setIsLoggedIn(true);
     } else {
       alert("Invalid credentials");
