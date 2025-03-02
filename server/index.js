@@ -128,7 +128,8 @@ app.post('/get_users', async (req, res) => {
   try {
     const usersSnapshot = await db.collection("users").get();
     const users = usersSnapshot.docs.map(doc => ({ id: doc.id, 
-      ...doc.data() 
+      ...doc.data(),
+      registeredAt: data.registeredAt ? data.registeredAt.toDate().toISOString() : ""
     }));
 
     res.json({ users });
