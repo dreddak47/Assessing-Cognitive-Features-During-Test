@@ -1,0 +1,284 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime
+from collections import Counter
+import numpy as np
+import json
+
+# Mapping for FAUs
+mapping_BP4D = {
+    0: 'Inner Brow Raiser', 1: 'Outer Brow Raiser', 2: 'Brow Lowerer',
+    3: 'Cheek raiser', 4: 'Lid Tightener', 5: 'Upper Lip Raiser',
+    6: 'Lip Corner Puller', 7: 'Dimpler', 8: 'Lip Corner Depressor',
+    9: 'Chin Raiser', 10: 'Lip Tightener', 11: 'Lip pressor'
+}
+reverse_map = {v: k for k, v in mapping_BP4D.items()}
+# Sampling rate
+samples_per_second = 2  # since 25ms per sample
+window_size = 3 * samples_per_second  # 3s before and after
+total_window = 2 * window_size   # total of 6s worth of data = 12 samples
+
+# Extract FAU list
+def extract_faus(data_str):
+    try:
+        faus = eval(data_str.split('=')[-1])
+        return [reverse_map[fa] for fa in faus if fa in reverse_map]
+    except:
+        return []
+
+def parse_variable_fields(field_str):
+  try:
+    return json.loads(field_str)
+  except json.JSONDecodeError:
+    return {}
+
+def list_to_vector(fau_list):
+    vec = [0] * 12
+    for i in fau_list:
+        if 0 <= i < 12:
+            vec[i] += 1
+    return vec
+
+guess_event_df = pd.DataFrame(columns=['type', 'participant', 'qn','TimeElapsed', 'windowData'])
+
+for i in range(1,41):
+  participant=f"P{i}"
+  print(participant)
+  # Load data
+  df = pd.read_csv(f"camera_log/{participant}.csv")
+
+  # Clean timestamps
+  df['timestamp'] = df['timestamp'].str.replace('+00:00Z', '', regex=False)
+  # df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+  # Filter FAU service only
+  fau_df = df[df['service'] == 'FAU'].copy()
+
+  fau_df['FAUs'] = fau_df['data'].apply(extract_faus)
+
+  # Convert directly
+  fau_df['fau_vector'] = fau_df['FAUs'].apply(list_to_vector)
+
+  fau_series = np.array(fau_df['fau_vector'].tolist())
+  timestamps = fau_df['timestamp'].tolist()
+
+  
+  # HTM setup
+  input_size = 12
+  encoding_width = 50
+  sp_output_size = 256
+
+  encoder = [RandomDistributedScalarEncoder(resolution=1.0, n=encoding_width, w=21) for _ in range(input_size)]
+  sp = SpatialPooler(
+      inputDimensions=(input_size * encoding_width,),
+      columnDimensions=(sp_output_size,),
+      potentialPct=0.85,
+      globalInhibition=True,
+      numActiveColumnsPerInhArea=40,
+      synPermInactiveDec=0.005,
+      synPermActiveInc=0.04,
+      synPermConnected=0.1
+  )
+  tm = TemporalMemory(
+      columnDimensions=(sp_output_size,),
+      cellsPerColumn=32,
+      activationThreshold=13,
+      initialPermanence=0.21,
+      connectedPermanence=0.5,
+      minThreshold=10,
+      maxNewSynapseCount=20,
+      permanenceIncrement=0.1,
+      permanenceDecrement=0.1,
+      predictedSegmentDecrement=0.001
+  )
+  anomaly_likelihood_helper = AnomalyLikelihood()
+
+  anomaly_scores = []
+
+  # Process each time step
+  for row in fau_series:
+      # Encode each of the 12 FAU values and flatten
+      sdr_list = [enc.encode(val) for enc, val in zip(encoder, row)]
+      enc_sdr = SDR((input_size * encoding_width,))
+      enc_sdr.concatenate(sdr_list)
+
+      # SP: Get active columns
+      sp_output = SDR(sp.getColumnDimensions())
+      sp.compute(enc_sdr, learn=True, activeArray=sp_output)
+
+      # TM: Compute next active/predictive cells
+      tm.compute(activeColumns=sp_output, learn=True)
+      anomaly = tm.anomaly
+
+      anomaly_scores.append(anomaly)
+
+  # Smooth anomaly scores with likelihood
+  likelihoods = []
+  for score in anomaly_scores:
+      likelihoods.append(anomaly_likelihood_helper.anomalyProbability(0, score)) 
+
+  timestamps = pd.Series(timestamps)
+
+  # Create a DataFrame for easy grouping
+  anomaly_df = pd.DataFrame({
+      'timestamp': timestamps,
+      'anomaly_score': anomaly_score
+  })
+
+  # Add a group index for every 10 rows (0.5 second grouping)
+  anomaly_df['group'] = anomaly_df.index // 10
+
+  # Group by the 'group' index and calculate mean anomaly score and the first timestamp in the group
+  grouped = (
+      anomaly_df
+      .groupby('group')
+      .agg({
+          'timestamp': 'first',
+          'anomaly_score': 'mean'
+      })
+      .reset_index(drop=True)
+  )
+
+
+  plt.figure(figsize=(12, 5))
+  plt.plot(grouped['timestamp'], grouped['anomaly_score'], marker='o', linestyle='-', color='blue', label='Anomaly Score')
+
+  plt.title(f"Anomaly Score (0.5 second bins) - {participant}")
+  plt.xlabel("Timestamp")
+  plt.ylabel("Anomaly Score")
+  plt.xticks([])
+  plt.tight_layout()
+  plt.legend()
+  plt.grid(True)
+  plt.savefig(f"{participant}_anomalyScore.png")
+  # plt.show()
+  plt.close()
+
+
+  # Load data
+  df = pd.read_csv(f"click_log/{participant}.csv")
+
+  df_submit=df[df['EventType'] == 'QSubmit'].copy().reset_index(drop=True)
+  a = df[df['EventType'] == 'Feedback']['VariableFields']
+  data = json.loads(a.iloc[0])
+
+  # Extract the guessType list
+  guess_types = data['guessType']
+
+  parsed_fields = df_submit['VariableFields'].apply(parse_variable_fields)
+  parsed_df = pd.json_normalize(parsed_fields)
+  df_submit = pd.concat([df_submit, parsed_df], axis=1)
+  df_submit.drop(columns=['VariableFields'], inplace=True)
+  df_submit['Qn'] = df_submit['Qn'].astype('Int64')
+  df_submit['TimeElapsed'] = df_submit['TimeElapsed'].astype('Int64')
+  # df_submit['Soption'] = df_submit['Soption'].astype('Int64')
+  df_submit['FirsttimeSeen'] = df_submit['FirsttimeSeen'].astype('Int64')
+  df_submit['ResponseTime'] = df_submit['ResponseTime'].astype('Int64')
+  # df_submit.head()
+
+  for j, guess_type in enumerate(guess_types):
+    if guess_type :
+        # Get time_elapsed for question i
+        row = df_submit.loc[df_submit['Qn'] == j]
+        x=row['TimeElapsed'].values[0]
+        center_idx = int(x * samples_per_second)
+
+        # Define window bounds
+        start_idx = center_idx - window_size -1
+        end_idx = center_idx + window_size + 2
+
+         # Extract and pad if necessary
+        window_data = grouped['anomaly_score'].iloc[max(start_idx, 0):min(end_idx, len(grouped))].copy().values
+
+        # Pad with zeros if window is out of bounds
+        if start_idx < 0:
+            pad_left = np.zeros(abs(start_idx))
+            window_data = np.concatenate([pad_left, window_data])
+        if end_idx > len(grouped):
+            pad_right = np.zeros(end_idx - len(grouped))
+            window_data = np.concatenate([window_data, pad_right])
+
+        # Append to result
+        guess_event_df.loc[len(guess_event_df)] = [guess_type, f"{participant}", j,x, window_data]
+
+import numpy as np
+import pandas as pd
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+# Confirm shape
+assert guess_event_df['windowData'].apply(len).eq(12).all(), "All windowData must be 12-length"
+
+# Define bin labels for interpretation
+bin_labels = ['-3s to -2.5s', '-2.5s to -2s', '-2s to -1.5s', '-1.5s to -1s', '-1s to -0.5s', '-0.5s to 0s',
+              '0s to 0.5s', '0.5s to 1s', '1s to 1.5s', '1.5s to 2s', '2s to 2.5s', '2.5s to 3s']
+
+## 1st Analysis
+# Merge half-second bins into 1-second bins: group every 2
+def to_1s_bins(window):
+    return [np.mean(window[i:i+2]) for i in range(0, 12, 2)]  # Only 6 full 1s bins from 12 values
+
+binned_data = guess_event_df['windowData'].apply(to_1s_bins)
+binned_array = np.stack(binned_data)
+
+# Calculate the mean anomaly score per 1-second bin
+mean_scores = binned_array.mean(axis=0)
+
+# Label for 1s bins
+time_bins = ['-3s to -2s', '-2s to -1s', '-1s to 0s', '0s to +1s', '+1s to +2s', '+2s to +3s']
+for label, score in zip(time_bins, mean_scores):
+    print(f"{label}: {score:.3f}")
+
+
+## 2nd Analysis
+# Subset 180 guesses made under pressure (last 200s of the test)
+LAST_LEFT = 200  
+
+# Guess under pressure
+guess_under_pressure = guess_event_df[
+    (guess_event_df['type'].notnull()) & 
+    (guess_event_df['timeElapsed'] >= LAST_LEFT - 10)
+].sample(n=180, random_state=42)
+
+# Mean of anomaly in 0s to +2s (bins 6 to 9)
+guess_mean = guess_under_pressure['windowData'].apply(lambda x: np.mean(x[6:10])).mean()
+
+# Now get non-guess under pressure — not in guess_event_df
+# For that, we need df_submit 
+non_guesses_under_pressure = df_submit[  
+    (df_submit['guess_type'].isnull()) &
+    (df_submit['timeElapsed'] >= LAST_LEFT - 10)
+].sample(n=180, random_state=42)
+
+
+non_guess_mean = non_guesses_under_pressure['windowData'].apply(lambda x: np.mean(x[6:10])).mean()
+
+print(f"Guessing (High Pressure): {guess_mean:.3f}")
+print(f"Non-Guessing (High Pressure): {non_guess_mean:.3f}")
+
+# Convert all windowData (13-d) to matrix for clustering
+window_matrix = np.stack(guess_event_df['windowData'].values)
+
+# Run KMeans clustering
+kmeans = KMeans(n_clusters=3, random_state=42, n_init='auto')
+guess_event_df['cluster'] = kmeans.fit_predict(window_matrix)
+
+# Count of each cluster
+cluster_counts = guess_event_df['cluster'].value_counts().sort_index()
+print("\nCluster Label\tPattern\t\t\t\tCount")
+print("-------------\t-------\t\t\t\t-----")
+patterns = ['Impulsive', 'Resigned', 'Distracted']
+for i, count in cluster_counts.items():
+    print(f"C{i + 1} - {patterns[i]:<10}\t{count}")
+
+# plt.figure(figsize=(10, 5))
+# for i in range(3):
+#     cluster_data = window_matrix[guess_event_df['cluster'] == i]
+#     mean_pattern = cluster_data.mean(axis=0)
+#     plt.plot(mean_pattern, label=f'C{i+1}: {patterns[i]}')
+# plt.xticks(ticks=range(13), labels=bin_labels, rotation=45)
+# plt.ylabel("Mean Anomaly Score")
+# plt.title("Clustered Guessing Behavior Patterns")
+# plt.legend()
+# plt.tight_layout()
+# plt.show()

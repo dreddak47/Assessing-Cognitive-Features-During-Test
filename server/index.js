@@ -7,17 +7,6 @@ const path = require('path');
 
 const { createLogger, format, transports } = require('winston');
 
-// const logger = createLogger({
-//   level: 'info',
-//   exitOnError: false,
-//   format: format.json(),
-//   transports: [
-//     new transports.Http(httpTransportOptions),
-//   ],
-// });
-
-// module.exports = logger;
-
 require('dotenv').config();
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -209,96 +198,6 @@ app.post('/log', async (req, res) => {
     res.status(500).send('Error logging event');
   }
 });
-
-
-// app.post("/receive-image", async (req, res) => {
-//   if(!usedb){
-//     try {
-//         axios.
-//         post(`${process.env.FLASK_ADDRESS}/log`, {...req.body,service:"FAU"}, {
-//           headers: { "Content-Type": "application/json" }
-//         });
-//       }catch (error) {
-//       console.error("Error forwarding to Flask:", error.message);
-//       return res.status(500).send("Error forwarding to Flask");
-//     }
-  
-//     res.status(200).json({ message: "Frame processed successfully" });
-//   }else{
-//     res.status(200).json({
-//       message: "Frame processed successfully",
-//     });
-//   }
-  
-// });
-
-// app.post("/receive-expression", async (req, res) => {
-//   if(!usedb){
-//     try {
-//         axios.
-//         post(`${process.env.FLASK_ADDRESS}/log`, {...req.body,service:"expression"}, {
-//           headers: { "Content-Type": "application/json" }
-//         });
-//       }catch (error) {
-//       console.error("Error forwarding to Flask:", error.message);
-//       return res.status(500).send("Error forwarding to Flask");
-//     }
-  
-//     res.status(200).json({ message: "Frame processed successfully" });
-//   }else{
-//     res.status(200).json({
-//       message: "Frame processed successfully",
-//     });
-//   }
-  
-  
-// });
-
-
-
-// function logfau(data){
-//   const {fau,id,ts}=data;
-//   // console.log(data);
-//   const httpTransportOptions = {
-//     host: 'http-intake.logs.us5.datadoghq.com',
-//     path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=FAU&ddtags=id:${id}`,
-//     ssl: true
-//   };
-
-//   const logger = createLogger({
-//     level: 'info',
-//     exitOnError: false,
-//     format: format.json(),
-//     transports: [
-//       new transports.Http(httpTransportOptions),
-//     ],
-//   });
-
-//   module.exports = logger;
-//   logger.info(data,{type: 'FAU' ,id:id});
-// }
-
-// function logexpression(data){
-//   const {maxEmotion,id,ts}=data
-//   const httpTransportOptions = {
-//     host: 'http-intake.logs.us5.datadoghq.com',
-//     path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=expression&ddtags=id:${id}`,
-//     ssl: true
-//   };
-
-//   const logger = createLogger({
-//     level: 'info',
-//     exitOnError: false,
-//     format: format.json(),
-//     transports: [
-//       new transports.Http(httpTransportOptions),
-//     ],
-//   });
-
-//   module.exports = logger;
-//   logger.info(data,{type: 'EXPRESSION',id:id });
-
-// }
 
 
 const PORT = process.env.PORT || 5000;
